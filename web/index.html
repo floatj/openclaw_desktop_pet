@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minecraft Bunny Girl Avatar</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; background: #1a1a2e; font-family: 'Courier New', monospace; }
+    canvas { display: block; }
+    #controls-info {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.35);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      text-align: center;
+      pointer-events: none;
+      z-index: 10;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.3);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    #fps {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      color: #fff;
+      font-size: 13px;
+      background: rgba(0,0,0,0.5);
+      padding: 4px 10px;
+      border-radius: 6px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #controls-info kbd {
+      background: rgba(255,255,255,0.25);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.35);
+      font-weight: bold;
+      margin: 0 1px;
+    }
+  </style>
+</head>
+<body>
+  <div id="fps" style="white-space:pre">FPS: --
+SPD: 5 / 9</div>
+  <div id="controls-info">
+    <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移動 &nbsp;|&nbsp;
+    <kbd>Space</kbd> 跳躍 &nbsp;|&nbsp;
+    <kbd>Shift</kbd> 跑步 &nbsp;|&nbsp;
+    <kbd>+</kbd><kbd>-</kbd> 加減速 &nbsp;|&nbsp;
+    滑鼠拖曳旋轉 &nbsp;|&nbsp;
+    滾輪縮放
+  </div>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // ── Scene Setup ──
+    const scene = new THREE.Scene();
+
+    // Gradient sky
+    const skyCanvas = document.createElement('canvas');
+    skyCanvas.width = 1;
+    skyCanvas.height = 256;
+    const skyCtx = skyCanvas.getContext('2d');
+    const skyGrad = skyCtx.createLinearGradient(0, 0, 0, 256);
+    skyGrad.addColorStop(0, '#4FC3F7');
+    skyGrad.addColorStop(0.4, '#81D4FA');
+    skyGrad.addColorStop(0.7, '#B3E5FC');
+    skyGrad.addColorStop(1, '#E1F5FE');
+    skyCtx.fillStyle = skyGrad;
+    skyCtx.fillRect(0, 0, 1, 256);
+    const skyTex = new THREE.CanvasTexture(skyCanvas);
+    scene.background = skyTex;
+    scene.fog = new THREE.FogExp2(0xB3E5FC, 0.012);
+
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
+    camera.position.set(0, 3.5, 7);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    document.body.appendChild(renderer.domElement);
+
+    // ── Orbit Controls ──
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = 3;
+    controls.maxDistance = 18;
+    controls.maxPolarAngle = Math.PI / 2.05;
+    controls.target.set(0, 2, 0);
+
+    // ── Lighting ──
+    const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x5B8C32, 0.5);
+    scene.add(hemiLight);
+
+    const ambientLight = new THREE.AmbientLight(0xfff5ee, 0.4);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xFFF8E7, 1.4);
+    dirLight.position.set(6, 12, 8);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.set(2048, 2048);
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = 50;
+    dirLight.shadow.camera.left = -20;
+    dirLight.shadow.camera.right = 20;
+    dirLight.shadow.camera.top = 20;
+    dirLight.shadow.camera.bottom = -20;
+    dirLight.shadow.bias = -0.001;
+    scene.add(dirLight);
+
+    // Rim light (back)
+    const rimLight = new THREE.DirectionalLight(0xFFD0E0, 0.6);
+    rimLight.position.set(-4, 8, -6);
+    scene.add(rimLight);
+
+    // ── Skin Texture (64x64 Minecraft format) ──
+    function createSkinTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#1A0A0A';
+      ctx.fillRect(0, 0, 64, 64);
+
+      const SKIN = '#FFD5B8';
+      const SKIN_SHADOW = '#F0C4A0';
+      const HAIR = '#8EB8D4';
+      const HAIR_DARK = '#6A9AB8';
+      const HAIR_LIGHT = '#B8D8EE';
+
+      // ══ HEAD - FRONT (8x8 at 8,8) ══
+      ctx.fillStyle = SKIN;
+      ctx.fillRect(8, 8, 8, 8);
+      // Maid headband
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(8, 8, 8, 1);
+      // Bangs - thick and styled
+      ctx.fillStyle = HAIR;
+      ctx.fillRect(8, 9, 8, 2);
+      ctx.fillStyle = HAIR_DARK;
+      ctx.fillRect(8, 9, 8, 1);
+      ctx.fillStyle = HAIR_LIGHT;
+      ctx.fillRect(9, 9, 2, 1);
+      ctx.fillRect(13, 9, 2, 1);
+      // Side hair framing face
+      ctx.fillStyle = HAIR;
+      ctx.fillRect(8, 11, 1, 5);
+      ctx.fillRect(15, 11, 1, 5);
+      ctx.fillStyle = HAIR_DARK;
+      ctx.fillRect(8, 14, 1, 2);
+      ctx.fillRect(15, 14, 1, 2);
+      // Eyes - big anime style
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(10, 12, 2, 2);
+      ctx.fillRect(13, 12, 2, 2);
+      // Iris (blue)
+      ctx.fillStyle = '#4A90D9';
+      ctx.fillRect(10, 12, 2, 2);
+      ctx.fillRect(13, 12, 2, 2);
+      // Lighter iris center
+      ctx.fillStyle = '#6AB0E8';
+      ctx.fillRect(10, 12, 1, 1);
+      ctx.fillRect(14, 12, 1, 1);
+      // Pupil
+      ctx.fillStyle = '#1A3060';
+      ctx.fillRect(11, 13, 1, 1);
+      ctx.fillRect(13, 13, 1, 1);
+      // Eye highlight
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(10, 12, 1, 1);
+      ctx.fillRect(13, 12, 1, 1);
+      // Blush marks
+      ctx.fillStyle = '#FFB0B0';
+      ctx.fillRect(9, 14, 2, 1);
+      ctx.fillRect(14, 14, 1, 1);
+      // Mouth
+      ctx.fillStyle = '#FF7B9C';
+      ctx.fillRect(12, 15, 1, 1);
+      // Nose hint
+      ctx.fillStyle = SKIN_SHADOW;
+      ctx.fillRect(12, 14, 1, 1);
+
+      // ══ HEAD - RIGHT (8x8 at 0,8) ══
+      ctx.fillStyle = SKIN;
+      ctx.fillRect(0, 8, 8, 8);
+      ctx.fillStyle = SKIN_SHADOW;
+      ctx.fillRect(0, 8, 2, 8);
+      // Maid headband
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 8, 8, 1);
+      ctx.fillStyle = HAIR;
+      ctx.fillRect(0, 9, 8, 2);
+      ctx.fillStyle = HAIR_DARK;
+      ctx.fillRect(0, 9, 8, 1);
+      ctx.fillStyle = HAIR;
+      ctx.fillRect(0, 11, 4, 5);
+      ctx.fillStyle = HAIR_DARK;
+      ctx.fillRect(0, 14, 3, 2);
+
+      // ══ HEAD - LEFT (8x8 at 16,8) ══
+      ctx.fillStyle = SKIN;
+      ctx.fillRect(16, 8, 8, 8);
+      // Maid headband
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(16, 8, 8, 1);
+      ctx.fillStyle = HAIR;
+      ctx.fillRect(16, 9, 8, 2);
+      ctx.fillStyle = HAIR_DARK;
+      ctx.fillRect(16, 9, 8, 1);
+      ctx.fillStyle = HAIR;
+      ctx.fillRect(20, 11, 4, 5);
+      ctx.fillStyle = HAIR_DARK;
+      ctx.fillRect(21, 14, 3, 2);
+
+      // ══ HEAD - BACK (8x8 at 24,8) ══
+      ctx.fillStyle = HAIR;
+      ctx.fillRect(24, 8, 8, 8);
+      // Maid headband
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(24, 8, 8, 1);
+      ctx.fillStyle = HAIR_DARK;
+      ctx.fillRect(24, 9, 8, 1);
+      ctx.fillStyle = HAIR_LIGHT;
+      ctx.fillRect(26, 10, 2, 1);
+      ctx.fillRect(28, 12, 2, 1);
+      ctx.fillStyle = HAIR_DARK;
+      ctx.fillRect(24, 14, 8, 2);
+
+      // ══ HEAD - TOP (8x8 at 8,0) ══
+      ctx.fillStyle = HAIR;
+      ctx.fillRect(8, 0, 8, 8);
+      ctx.fillStyle = HAIR_DARK;
+      ctx.fillRect(8, 0, 8, 2);
+      ctx.fillStyle = HAIR_LIGHT;
+      ctx.fillRect(10, 3, 2, 2);
+      ctx.fillRect(13, 2, 2, 2);
+
+      // ══ HEAD - BOTTOM (8x8 at 16,0) ══
+      ctx.fillStyle = SKIN;
+      ctx.fillRect(16, 0, 8, 8);
+
+      // ══ BODY - FRONT (8x12 at 20,20) ══
+      // Blue maid dress top
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(20, 20, 8, 4);
+      ctx.fillStyle = '#2D4373';
+      ctx.fillRect(20, 20, 8, 1); // collar shadow
+      // White collar detail
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(22, 20, 4, 1);
+      // Blue bow
+      ctx.fillStyle = '#4A90D9';
+      ctx.fillRect(23, 21, 2, 1);
+      ctx.fillStyle = '#6AB0E8';
+      ctx.fillRect(22, 22, 1, 1);
+      ctx.fillRect(25, 22, 1, 1);
+      ctx.fillStyle = '#4A90D9';
+      ctx.fillRect(23, 22, 2, 1);
+      // White apron
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(22, 23, 4, 1);
+      // Skirt (blue maid dress with pleats)
+      ctx.fillStyle = '#2D4373';
+      ctx.fillRect(20, 24, 8, 1); // waistband
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(20, 25, 8, 7);
+      // White apron over skirt
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(22, 25, 4, 6);
+      ctx.fillStyle = '#F0F0F0';
+      ctx.fillRect(22, 25, 1, 6);
+      ctx.fillRect(25, 25, 1, 6);
+      // Pleat lines on blue sides
+      ctx.fillStyle = '#2D4373';
+      ctx.fillRect(20, 25, 1, 7);
+      ctx.fillRect(27, 25, 1, 7);
+      // White trim
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(20, 31, 8, 1);
+
+      // ══ BODY - RIGHT (4x12 at 16,20) ══
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(16, 20, 4, 4);
+      ctx.fillStyle = '#2D4373';
+      ctx.fillRect(16, 24, 4, 1);
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(16, 25, 4, 7);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(16, 31, 4, 1);
+
+      // ══ BODY - LEFT (4x12 at 28,20) ══
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(28, 20, 4, 4);
+      ctx.fillStyle = '#2D4373';
+      ctx.fillRect(28, 24, 4, 1);
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(28, 25, 4, 7);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(28, 31, 4, 1);
+
+      // ══ BODY - BACK (8x12 at 32,20) ══
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(32, 20, 8, 4);
+      // Back apron bow (white)
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(34, 21, 4, 2);
+      ctx.fillStyle = '#F0F0F0';
+      ctx.fillRect(35, 21, 2, 2);
+      ctx.fillStyle = '#2D4373';
+      ctx.fillRect(32, 24, 8, 1);
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(32, 25, 8, 7);
+      ctx.fillStyle = '#2D4373';
+      ctx.fillRect(32, 25, 1, 7);
+      ctx.fillRect(35, 26, 1, 6);
+      ctx.fillRect(39, 25, 1, 7);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(32, 31, 8, 1);
+
+      // ══ BODY - TOP (8x4 at 20,16) ══
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(20, 16, 8, 4);
+
+      // ══ BODY - BOTTOM (8x4 at 28,16) ══
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(28, 16, 8, 4);
+
+      // ══ RIGHT ARM (4x12 at 44,20) ══
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(44, 20, 4, 12);
+      // Blue puff sleeve
+      ctx.fillStyle = '#4A6BAF';
+      ctx.fillRect(44, 20, 4, 3);
+      ctx.fillStyle = '#2D4373';
+      ctx.fillRect(44, 22, 4, 1);
+      // White gloves
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(44, 28, 4, 4);
+      ctx.fillStyle = '#F0F0F0';
+      ctx.fillRect(44, 28, 4, 1);
+
+      // ══ LEFT ARM (4x12 at 36,52) ══
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(36, 52, 4, 12);
+      // Blue puff sleeve
+      ctx.fillStyle = '#4A6BAF';
+      ctx.fillRect(36, 52, 4, 3);
+      ctx.fillStyle = '#2D4373';
+      ctx.fillRect(36, 54, 4, 1);
+      // White gloves
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(36, 60, 4, 4);
+      ctx.fillStyle = '#F0F0F0';
+      ctx.fillRect(36, 60, 4, 1);
+
+      // ══ RIGHT LEG (4x12 at 4,20) ══
+      // White stockings
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(4, 20, 4, 9);
+      ctx.fillStyle = '#F0F0F0';
+      ctx.fillRect(5, 20, 2, 1); // stocking top detail
+      // Blue ribbon on stocking
+      ctx.fillStyle = '#4A90D9';
+      ctx.fillRect(4, 20, 4, 1);
+      // Blue shoes
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(4, 29, 4, 3);
+      ctx.fillStyle = '#4A6BAF';
+      ctx.fillRect(5, 29, 2, 1);
+
+      // ══ LEFT LEG (4x12 at 20,52) ══
+      // White stockings
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(20, 52, 4, 9);
+      ctx.fillStyle = '#F0F0F0';
+      ctx.fillRect(21, 52, 2, 1);
+      ctx.fillStyle = '#4A90D9';
+      ctx.fillRect(20, 52, 4, 1);
+      // Blue shoes
+      ctx.fillStyle = '#3B5998';
+      ctx.fillRect(20, 61, 4, 3);
+      ctx.fillStyle = '#4A6BAF';
+      ctx.fillRect(21, 61, 2, 1);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestFilter;
+      return texture;
+    }
+
+    // ── Build Minecraft Character ──
+    function createMinecraftAvatar() {
+      const avatar = new THREE.Group();
+      const skinTexture = createSkinTexture();
+
+      function createBoxWithUV(w, h, d, uvMapping) {
+        const geometry = new THREE.BoxGeometry(w, h, d);
+        const uvAttr = geometry.attributes.uv;
+        const faces = ['right', 'left', 'top', 'bottom', 'front', 'back'];
+        for (let i = 0; i < faces.length; i++) {
+          const face = uvMapping[faces[i]] || { x: 0, y: 0, w: 8, h: 8 };
+          const u0 = face.x / 64;
+          const v0 = 1 - (face.y + face.h) / 64;
+          const u1 = (face.x + face.w) / 64;
+          const v1 = 1 - face.y / 64;
+          const idx = i * 4;
+          uvAttr.setXY(idx, u0, v1);
+          uvAttr.setXY(idx + 1, u1, v1);
+          uvAttr.setXY(idx + 2, u0, v0);
+          uvAttr.setXY(idx + 3, u1, v0);
+        }
+        uvAttr.needsUpdate = true;
+        return geometry;
+      }
+
+      const material = new THREE.MeshStandardMaterial({
+        map: skinTexture,
+        roughness: 0.8,
+        metalness: 0.0,
+      });
+
+      // Head (1x1x1)
+      const headGeo = createBoxWithUV(1, 1, 1, {
+        front: { x: 8, y: 8, w: 8, h: 8 },
+        back: { x: 24, y: 8, w: 8, h: 8 },
+        right: { x: 0, y: 8, w: 8, h: 8 },
+        left: { x: 16, y: 8, w: 8, h: 8 },
+        top: { x: 8, y: 0, w: 8, h: 8 },
+        bottom: { x: 16, y: 0, w: 8, h: 8 },
+      });
+      const headGroup = new THREE.Group();
+      const headMesh = new THREE.Mesh(headGeo, material);
+      headMesh.castShadow = true;
+      headGroup.add(headMesh);
+
+      // ── Bunny Ears (3D geometry, taller and more expressive) ──
+      const earOuterMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.6 });
+      const earInnerMat = new THREE.MeshStandardMaterial({ color: 0xFFB0B8, roughness: 0.5 });
+
+      function createEar(xPos, zRot) {
+        const earGroup = new THREE.Group();
+        // Outer ear
+        const outer = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.1, 0.18), earOuterMat);
+        outer.castShadow = true;
+        earGroup.add(outer);
+        // Inner ear (pink)
+        const inner = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.85, 0.06), earInnerMat);
+        inner.position.z = 0.07;
+        earGroup.add(inner);
+        // Ear tip (slightly narrower)
+        const tip = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.3, 0.14), earOuterMat);
+        tip.position.y = 0.65;
+        tip.castShadow = true;
+        earGroup.add(tip);
+        const tipInner = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.05), earInnerMat);
+        tipInner.position.set(0, 0.65, 0.07);
+        earGroup.add(tipInner);
+
+        earGroup.position.set(xPos, 1.05, -0.05);
+        earGroup.rotation.z = zRot;
+        return earGroup;
+      }
+
+      const rightEar = createEar(-0.28, 0.12);
+      const leftEar = createEar(0.28, -0.12);
+      headGroup.add(rightEar);
+      headGroup.add(leftEar);
+
+      // Hair pieces (3D flowing hair)
+      const hairMat = new THREE.MeshStandardMaterial({ color: 0x8EB8D4, roughness: 0.7 });
+      const hairDarkMat = new THREE.MeshStandardMaterial({ color: 0x6A9AB8, roughness: 0.7 });
+
+      // Back hair (twin tails)
+      const twinTailL = new THREE.Group();
+      const ttl1 = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.6, 0.3), hairMat);
+      ttl1.position.set(0, 0, 0);
+      twinTailL.add(ttl1);
+      const ttl2 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.5, 0.25), hairDarkMat);
+      ttl2.position.set(0, -0.5, 0);
+      twinTailL.add(ttl2);
+      const ttl3 = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.4, 0.2), hairMat);
+      ttl3.position.set(0, -0.9, 0.05);
+      twinTailL.add(ttl3);
+      twinTailL.position.set(-0.35, -0.1, -0.5);
+      twinTailL.rotation.x = 0.15;
+      headGroup.add(twinTailL);
+
+      const twinTailR = twinTailL.clone();
+      twinTailR.position.set(0.35, -0.1, -0.5);
+      twinTailR.rotation.x = 0.15;
+      headGroup.add(twinTailR);
+
+      // Hair ribbon bows on twin tails
+      const ribbonMat = new THREE.MeshStandardMaterial({ color: 0x4A90D9, roughness: 0.4, metalness: 0.1 });
+      const ribbonL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.15), ribbonMat);
+      ribbonL.position.set(-0.35, 0.2, -0.5);
+      headGroup.add(ribbonL);
+      const ribbonR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.15), ribbonMat);
+      ribbonR.position.set(0.35, 0.2, -0.5);
+      headGroup.add(ribbonR);
+
+      headGroup.position.y = 1.75;
+      headGroup.children.forEach(c => { if (c.isMesh) c.castShadow = true; });
+      avatar.add(headGroup);
+      avatar.head = headGroup;
+      avatar.rightEar = rightEar;
+      avatar.leftEar = leftEar;
+      avatar.twinTailL = twinTailL;
+      avatar.twinTailR = twinTailR;
+
+      // Body (1x1.5x0.5)
+      const bodyGeo = createBoxWithUV(1, 1.5, 0.5, {
+        front: { x: 20, y: 20, w: 8, h: 12 },
+        back: { x: 32, y: 20, w: 8, h: 12 },
+        right: { x: 16, y: 20, w: 4, h: 12 },
+        left: { x: 28, y: 20, w: 4, h: 12 },
+        top: { x: 20, y: 16, w: 8, h: 4 },
+        bottom: { x: 28, y: 16, w: 8, h: 4 },
+      });
+      const body = new THREE.Mesh(bodyGeo, material);
+      body.position.y = 0.75;
+      body.castShadow = true;
+      avatar.add(body);
+
+      // Arms (0.5x1.5x0.5, slim model uses 0.375)
+      const armW = 0.375;
+      const rArmGeo = createBoxWithUV(armW, 1.5, 0.5, {
+        front: { x: 44, y: 20, w: 4, h: 12 }, back: { x: 44, y: 20, w: 4, h: 12 },
+        right: { x: 44, y: 20, w: 4, h: 12 }, left: { x: 44, y: 20, w: 4, h: 12 },
+        top: { x: 44, y: 20, w: 4, h: 4 }, bottom: { x: 44, y: 20, w: 4, h: 4 },
+      });
+      const rArmPivot = new THREE.Group();
+      rArmPivot.position.set(-0.69, 1.5, 0);
+      const rArm = new THREE.Mesh(rArmGeo, material);
+      rArm.position.y = -0.75;
+      rArm.castShadow = true;
+      rArmPivot.add(rArm);
+      avatar.add(rArmPivot);
+      avatar.rightArm = rArmPivot;
+
+      const lArmGeo = createBoxWithUV(armW, 1.5, 0.5, {
+        front: { x: 36, y: 52, w: 4, h: 12 }, back: { x: 36, y: 52, w: 4, h: 12 },
+        right: { x: 36, y: 52, w: 4, h: 12 }, left: { x: 36, y: 52, w: 4, h: 12 },
+        top: { x: 36, y: 52, w: 4, h: 4 }, bottom: { x: 36, y: 52, w: 4, h: 4 },
+      });
+      const lArmPivot = new THREE.Group();
+      lArmPivot.position.set(0.69, 1.5, 0);
+      const lArm = new THREE.Mesh(lArmGeo, material);
+      lArm.position.y = -0.75;
+      lArm.castShadow = true;
+      lArmPivot.add(lArm);
+      avatar.add(lArmPivot);
+      avatar.leftArm = lArmPivot;
+
+      // Legs (0.5x1.5x0.5)
+      const rLegGeo = createBoxWithUV(0.5, 1.5, 0.5, {
+        front: { x: 4, y: 20, w: 4, h: 12 }, back: { x: 4, y: 20, w: 4, h: 12 },
+        right: { x: 4, y: 20, w: 4, h: 12 }, left: { x: 4, y: 20, w: 4, h: 12 },
+        top: { x: 4, y: 20, w: 4, h: 4 }, bottom: { x: 4, y: 29, w: 4, h: 3 },
+      });
+      const rLegPivot = new THREE.Group();
+      rLegPivot.position.set(-0.25, 0, 0);
+      const rLeg = new THREE.Mesh(rLegGeo, material);
+      rLeg.position.y = -0.75;
+      rLeg.castShadow = true;
+      rLegPivot.add(rLeg);
+      avatar.add(rLegPivot);
+      avatar.rightLeg = rLegPivot;
+
+      const lLegGeo = createBoxWithUV(0.5, 1.5, 0.5, {
+        front: { x: 20, y: 52, w: 4, h: 12 }, back: { x: 20, y: 52, w: 4, h: 12 },
+        right: { x: 20, y: 52, w: 4, h: 12 }, left: { x: 20, y: 52, w: 4, h: 12 },
+        top: { x: 20, y: 52, w: 4, h: 4 }, bottom: { x: 20, y: 61, w: 4, h: 3 },
+      });
+      const lLegPivot = new THREE.Group();
+      lLegPivot.position.set(0.25, 0, 0);
+      const lLeg = new THREE.Mesh(lLegGeo, material);
+      lLeg.position.y = -0.75;
+      lLeg.castShadow = true;
+      lLegPivot.add(lLeg);
+      avatar.add(lLegPivot);
+      avatar.leftLeg = lLegPivot;
+
+      avatar.position.y = 0.75;
+      return avatar;
+    }
+
+    const avatar = createMinecraftAvatar();
+    scene.add(avatar);
+
+    // ── Ground ──
+    function createGround() {
+      const groundGroup = new THREE.Group();
+      const size = 32;
+
+      const grassCanvas = document.createElement('canvas');
+      grassCanvas.width = 16;
+      grassCanvas.height = 16;
+      const gCtx = grassCanvas.getContext('2d');
+      gCtx.fillStyle = '#4CAF50';
+      gCtx.fillRect(0, 0, 16, 16);
+      for (let i = 0; i < 60; i++) {
+        const x = Math.floor(Math.random() * 16);
+        const y = Math.floor(Math.random() * 16);
+        const colors = ['#43A047', '#66BB6A', '#388E3C', '#2E7D32', '#81C784'];
+        gCtx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+        gCtx.fillRect(x, y, 1, 1);
+      }
+      const grassTexture = new THREE.CanvasTexture(grassCanvas);
+      grassTexture.magFilter = THREE.NearestFilter;
+      grassTexture.minFilter = THREE.NearestFilter;
+      grassTexture.wrapS = THREE.RepeatWrapping;
+      grassTexture.wrapT = THREE.RepeatWrapping;
+      grassTexture.repeat.set(size, size);
+
+      const groundGeo = new THREE.PlaneGeometry(size, size);
+      const groundMat = new THREE.MeshStandardMaterial({ map: grassTexture, roughness: 0.9 });
+      const ground = new THREE.Mesh(groundGeo, groundMat);
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      groundGroup.add(ground);
+
+      // Dirt sides
+      const dirtCanvas = document.createElement('canvas');
+      dirtCanvas.width = 16;
+      dirtCanvas.height = 16;
+      const dCtx = dirtCanvas.getContext('2d');
+      dCtx.fillStyle = '#795548';
+      dCtx.fillRect(0, 0, 16, 16);
+      for (let i = 0; i < 30; i++) {
+        dCtx.fillStyle = Math.random() > 0.5 ? '#6D4C41' : '#8D6E63';
+        dCtx.fillRect(Math.floor(Math.random() * 16), Math.floor(Math.random() * 16), 1, 1);
+      }
+      dCtx.fillStyle = '#4CAF50';
+      dCtx.fillRect(0, 0, 16, 2);
+      const dirtTexture = new THREE.CanvasTexture(dirtCanvas);
+      dirtTexture.magFilter = THREE.NearestFilter;
+      dirtTexture.minFilter = THREE.NearestFilter;
+      dirtTexture.wrapS = THREE.RepeatWrapping;
+      dirtTexture.repeat.set(size, 1);
+
+      const sideGeo = new THREE.PlaneGeometry(size, 1.5);
+      const sideMat = new THREE.MeshStandardMaterial({ map: dirtTexture, roughness: 0.9 });
+      [
+        { pos: [0, -0.75, -size / 2], rot: [0, 0, 0] },
+        { pos: [0, -0.75, size / 2], rot: [0, Math.PI, 0] },
+        { pos: [-size / 2, -0.75, 0], rot: [0, Math.PI / 2, 0] },
+        { pos: [size / 2, -0.75, 0], rot: [0, -Math.PI / 2, 0] },
+      ].forEach(s => {
+        const side = new THREE.Mesh(sideGeo, sideMat);
+        side.position.set(...s.pos);
+        side.rotation.set(...s.rot);
+        groundGroup.add(side);
+      });
+
+      return groundGroup;
+    }
+    scene.add(createGround());
+
+    // ── Flowers ──
+    function addFlowers() {
+      const flowerColors = [0xFF69B4, 0xFFEB3B, 0xFF5722, 0xE91E63, 0x9C27B0, 0x2196F3, 0xFFFFFF];
+      for (let i = 0; i < 60; i++) {
+        const flower = new THREE.Group();
+        const stemMat = new THREE.MeshStandardMaterial({ color: 0x388E3C, roughness: 0.8 });
+        const stem = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.08), stemMat);
+        stem.position.y = 0.15;
+        flower.add(stem);
+
+        const color = flowerColors[Math.floor(Math.random() * flowerColors.length)];
+        const petalMat = new THREE.MeshStandardMaterial({ color, roughness: 0.5 });
+        const petal = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), petalMat);
+        petal.position.y = 0.35;
+        petal.rotation.y = Math.random() * Math.PI;
+        flower.add(petal);
+
+        const x = (Math.random() - 0.5) * 28;
+        const z = (Math.random() - 0.5) * 28;
+        // Don't place too close to center
+        if (Math.abs(x) < 2 && Math.abs(z) < 2) continue;
+        flower.position.set(x, 0, z);
+        scene.add(flower);
+      }
+    }
+    addFlowers();
+
+    // ── Trees ──
+    function createTree(variant) {
+      const tree = new THREE.Group();
+      const trunkH = 4 + Math.floor(Math.random() * 2);
+
+      const trunkCanvas = document.createElement('canvas');
+      trunkCanvas.width = 16;
+      trunkCanvas.height = 16;
+      const tCtx = trunkCanvas.getContext('2d');
+      tCtx.fillStyle = variant === 'birch' ? '#D7CCC8' : '#5D4037';
+      tCtx.fillRect(0, 0, 16, 16);
+      for (let i = 0; i < 25; i++) {
+        tCtx.fillStyle = variant === 'birch'
+          ? (Math.random() > 0.5 ? '#BCAAA4' : '#3E2723')
+          : (Math.random() > 0.5 ? '#4E342E' : '#6D4C41');
+        const w = variant === 'birch' ? 3 : 1;
+        tCtx.fillRect(Math.floor(Math.random() * 16), Math.floor(Math.random() * 16), w, variant === 'birch' ? 1 : 2);
+      }
+      const trunkTex = new THREE.CanvasTexture(trunkCanvas);
+      trunkTex.magFilter = THREE.NearestFilter;
+      trunkTex.minFilter = THREE.NearestFilter;
+      const trunkMat = new THREE.MeshStandardMaterial({ map: trunkTex, roughness: 0.9 });
+
+      for (let y = 0; y < trunkH; y++) {
+        const trunk = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), trunkMat);
+        trunk.position.y = y + 0.5;
+        trunk.castShadow = true;
+        tree.add(trunk);
+      }
+
+      const leafCanvas = document.createElement('canvas');
+      leafCanvas.width = 16;
+      leafCanvas.height = 16;
+      const lCtx = leafCanvas.getContext('2d');
+      const leafBase = variant === 'sakura' ? '#F48FB1' : '#2E7D32';
+      lCtx.fillStyle = leafBase;
+      lCtx.fillRect(0, 0, 16, 16);
+      for (let i = 0; i < 50; i++) {
+        if (variant === 'sakura') {
+          lCtx.fillStyle = Math.random() > 0.5 ? '#F06292' : '#FCE4EC';
+        } else {
+          lCtx.fillStyle = Math.random() > 0.5 ? '#1B5E20' : '#43A047';
+        }
+        lCtx.fillRect(Math.floor(Math.random() * 16), Math.floor(Math.random() * 16), 1, 1);
+      }
+      const leafTex = new THREE.CanvasTexture(leafCanvas);
+      leafTex.magFilter = THREE.NearestFilter;
+      leafTex.minFilter = THREE.NearestFilter;
+      const leafMat = new THREE.MeshStandardMaterial({
+        map: leafTex, roughness: 0.8,
+        transparent: variant === 'sakura',
+        opacity: variant === 'sakura' ? 0.92 : 1,
+      });
+
+      const topY = trunkH;
+      const leafLayouts = [
+        // Bottom layer (3x3)
+        ...[[-1,0,-1],[-1,0,0],[-1,0,1],[0,0,-1],[0,0,0],[0,0,1],[1,0,-1],[1,0,0],[1,0,1]].map(p => [p[0], topY + p[1], p[2]]),
+        // Middle layer (3x3)
+        ...[[-1,1,-1],[-1,1,0],[-1,1,1],[0,1,-1],[0,1,0],[0,1,1],[1,1,-1],[1,1,0],[1,1,1]].map(p => [p[0], topY + p[1], p[2]]),
+        // Top layer (cross)
+        [0, topY + 2, 0], [1, topY + 2, 0], [-1, topY + 2, 0], [0, topY + 2, 1], [0, topY + 2, -1],
+        // Peak
+        [0, topY + 3, 0],
+      ];
+
+      leafLayouts.forEach(p => {
+        const leaf = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), leafMat);
+        leaf.position.set(p[0], p[1] + 0.5, p[2]);
+        leaf.castShadow = true;
+        tree.add(leaf);
+      });
+
+      return tree;
+    }
+
+    // Place trees
+    const treeConfigs = [
+      { pos: [-8, 0, -8], variant: 'oak' },
+      { pos: [9, 0, -5], variant: 'birch' },
+      { pos: [-6, 0, 10], variant: 'sakura' },
+      { pos: [11, 0, 9], variant: 'oak' },
+      { pos: [-12, 0, 2], variant: 'sakura' },
+      { pos: [4, 0, -11], variant: 'birch' },
+    ];
+    treeConfigs.forEach(tc => {
+      const tree = createTree(tc.variant);
+      tree.position.set(...tc.pos);
+      scene.add(tree);
+    });
+
+    // ── Decorative blocks ──
+    const blockDefs = [
+      { color: 0x795548, positions: [[-4, 0.5, -3], [-4, 0.5, -2], [-4, 1.5, -3]] },
+      { color: 0x9E9E9E, positions: [[5, 0.5, 4], [6, 0.5, 4]] },
+      { color: 0xFFCC80, positions: [[-2, 0.5, 6]] },
+    ];
+    blockDefs.forEach(bd => {
+      const bCanvas = document.createElement('canvas');
+      bCanvas.width = 16;
+      bCanvas.height = 16;
+      const bCtx = bCanvas.getContext('2d');
+      const r = (bd.color >> 16) & 0xFF, g = (bd.color >> 8) & 0xFF, b = bd.color & 0xFF;
+      bCtx.fillStyle = `rgb(${r},${g},${b})`;
+      bCtx.fillRect(0, 0, 16, 16);
+      for (let j = 0; j < 25; j++) {
+        const shade = (Math.random() - 0.5) * 40;
+        bCtx.fillStyle = `rgb(${Math.max(0,Math.min(255,r+shade))},${Math.max(0,Math.min(255,g+shade))},${Math.max(0,Math.min(255,b+shade))})`;
+        bCtx.fillRect(Math.floor(Math.random()*16), Math.floor(Math.random()*16), 1, 1);
+      }
+      const tex = new THREE.CanvasTexture(bCanvas);
+      tex.magFilter = THREE.NearestFilter;
+      tex.minFilter = THREE.NearestFilter;
+      const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 });
+      bd.positions.forEach(pos => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat);
+        mesh.position.set(...pos);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        scene.add(mesh);
+      });
+    });
+
+    // ── Clouds ──
+    function addClouds() {
+      const cloudMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff, roughness: 1, metalness: 0, transparent: true, opacity: 0.85,
+      });
+      for (let i = 0; i < 10; i++) {
+        const cloud = new THREE.Group();
+        const len = 3 + Math.floor(Math.random() * 5);
+        for (let j = 0; j < len; j++) {
+          const block = new THREE.Mesh(new THREE.BoxGeometry(2, 0.6, 2), cloudMat);
+          block.position.x = j * 1.8;
+          block.position.z = (Math.random() - 0.5) * 3;
+          cloud.add(block);
+        }
+        cloud.position.set(
+          (Math.random() - 0.5) * 80,
+          16 + Math.random() * 6,
+          (Math.random() - 0.5) * 80
+        );
+        cloud.userData.speed = 0.008 + Math.random() * 0.015;
+        scene.add(cloud);
+      }
+    }
+    addClouds();
+
+    // ── Floating particles (sakura petals / sparkles) ──
+    const particles = [];
+    function addParticles() {
+      const petalGeo = new THREE.BoxGeometry(0.06, 0.06, 0.02);
+      const petalMat = new THREE.MeshStandardMaterial({ color: 0xFFB0C8, roughness: 0.5 });
+      for (let i = 0; i < 30; i++) {
+        const petal = new THREE.Mesh(petalGeo, petalMat);
+        petal.position.set(
+          (Math.random() - 0.5) * 20,
+          2 + Math.random() * 8,
+          (Math.random() - 0.5) * 20
+        );
+        petal.userData.velocity = {
+          x: (Math.random() - 0.5) * 0.3,
+          y: -0.2 - Math.random() * 0.3,
+          z: (Math.random() - 0.5) * 0.3,
+          rotSpeed: Math.random() * 2,
+        };
+        particles.push(petal);
+        scene.add(petal);
+      }
+    }
+    addParticles();
+
+    // ── Movement State ──
+    const keys = {};
+    const playerVelocity = new THREE.Vector3();
+    const playerDirection = new THREE.Vector3();
+    let isGrounded = true;
+    let animTime = 0;
+    let isMoving = false;
+    let isRunning = false;
+    let walkSpeed = 5;
+    let runSpeed = 9;
+    const JUMP_FORCE = 6;
+    const GRAVITY = 15;
+    const GROUND_Y = 0.75;
+
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (e.code === 'Space') e.preventDefault();
+      if (e.code === 'Equal' || e.code === 'NumpadAdd') {
+        walkSpeed = Math.min(walkSpeed + 1, 30);
+        runSpeed = Math.min(runSpeed + 1.5, 50);
+      }
+      if (e.code === 'Minus' || e.code === 'NumpadSubtract') {
+        walkSpeed = Math.max(walkSpeed - 1, 1);
+        runSpeed = Math.max(runSpeed - 1.5, 2);
+      }
+    });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+    // ── Animation Loop ──
+    const clock = new THREE.Clock();
+    const fpsEl = document.getElementById('fps');
+    let frameCount = 0;
+    let fpsTime = 0;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = Math.min(clock.getDelta(), 0.05);
+      animTime += delta;
+
+      // FPS counter
+      frameCount++;
+      fpsTime += delta;
+      if (fpsTime >= 0.5) {
+        fpsEl.textContent = `FPS: ${Math.round(frameCount / fpsTime)}\nSPD: ${walkSpeed.toFixed(0)} / ${runSpeed.toFixed(0)}`;
+        frameCount = 0;
+        fpsTime = 0;
+      }
+
+      isRunning = keys['ShiftLeft'] || keys['ShiftRight'];
+      const speed = isRunning ? runSpeed : walkSpeed;
+      const moveDir = new THREE.Vector3();
+
+      if (keys['KeyW'] || keys['ArrowUp']) moveDir.z -= 1;
+      if (keys['KeyS'] || keys['ArrowDown']) moveDir.z += 1;
+      if (keys['KeyA'] || keys['ArrowLeft']) moveDir.x -= 1;
+      if (keys['KeyD'] || keys['ArrowRight']) moveDir.x += 1;
+
+      isMoving = moveDir.length() > 0;
+
+      if (isMoving) {
+        moveDir.normalize();
+        const cameraDir = new THREE.Vector3();
+        camera.getWorldDirection(cameraDir);
+        cameraDir.y = 0;
+        cameraDir.normalize();
+        const cameraRight = new THREE.Vector3();
+        cameraRight.crossVectors(cameraDir, new THREE.Vector3(0, 1, 0)).normalize();
+
+        playerDirection.set(0, 0, 0);
+        playerDirection.addScaledVector(cameraDir, -moveDir.z);
+        playerDirection.addScaledVector(cameraRight, moveDir.x);
+        playerDirection.normalize();
+
+        avatar.position.x += playerDirection.x * speed * delta;
+        avatar.position.z += playerDirection.z * speed * delta;
+
+        const targetAngle = Math.atan2(playerDirection.x, playerDirection.z);
+        let diff = targetAngle - avatar.rotation.y;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        avatar.rotation.y += diff * 10 * delta;
+      }
+
+      // Jump
+      if (keys['Space'] && isGrounded) {
+        playerVelocity.y = JUMP_FORCE;
+        isGrounded = false;
+      }
+
+      // Gravity
+      if (!isGrounded) {
+        playerVelocity.y -= GRAVITY * delta;
+        avatar.position.y += playerVelocity.y * delta;
+        if (avatar.position.y <= GROUND_Y) {
+          avatar.position.y = GROUND_Y;
+          playerVelocity.y = 0;
+          isGrounded = true;
+        }
+      }
+
+      const bound = 14;
+      avatar.position.x = Math.max(-bound, Math.min(bound, avatar.position.x));
+      avatar.position.z = Math.max(-bound, Math.min(bound, avatar.position.z));
+
+      // ── Limb Animation ──
+      if (isMoving) {
+        const animSpeed = isRunning ? 12 : 8;
+        const armSwing = isRunning ? 1.2 : 0.8;
+        const legSwing = isRunning ? 1.0 : 0.6;
+
+        avatar.rightArm.rotation.x = Math.sin(animTime * animSpeed) * armSwing;
+        avatar.leftArm.rotation.x = -Math.sin(animTime * animSpeed) * armSwing;
+        avatar.rightLeg.rotation.x = -Math.sin(animTime * animSpeed) * legSwing;
+        avatar.leftLeg.rotation.x = Math.sin(animTime * animSpeed) * legSwing;
+
+        avatar.head.position.y = 1.75 + Math.abs(Math.sin(animTime * animSpeed)) * 0.06;
+
+        // Ear bounce
+        avatar.rightEar.rotation.z = 0.12 + Math.sin(animTime * animSpeed * 1.5) * 0.15;
+        avatar.leftEar.rotation.z = -0.12 - Math.sin(animTime * animSpeed * 1.5) * 0.15;
+
+        // Twin tail sway
+        const tailSwing = isRunning ? 0.3 : 0.15;
+        avatar.twinTailL.rotation.x = 0.15 + Math.sin(animTime * animSpeed) * tailSwing;
+        avatar.twinTailR.rotation.x = 0.15 - Math.sin(animTime * animSpeed) * tailSwing;
+        avatar.twinTailL.rotation.z = Math.sin(animTime * animSpeed * 0.7) * 0.1;
+        avatar.twinTailR.rotation.z = -Math.sin(animTime * animSpeed * 0.7) * 0.1;
+      } else {
+        avatar.rightArm.rotation.x *= 0.9;
+        avatar.leftArm.rotation.x *= 0.9;
+        avatar.rightLeg.rotation.x *= 0.9;
+        avatar.leftLeg.rotation.x *= 0.9;
+
+        avatar.rightArm.rotation.z = Math.sin(animTime * 1.5) * 0.04;
+        avatar.leftArm.rotation.z = -Math.sin(animTime * 1.5) * 0.04;
+        avatar.head.position.y = 1.75 + Math.sin(animTime * 2) * 0.025;
+
+        // Idle ear wiggle
+        avatar.rightEar.rotation.z = 0.12 + Math.sin(animTime * 2.5) * 0.08;
+        avatar.leftEar.rotation.z = -0.12 - Math.sin(animTime * 2.5) * 0.08;
+
+        // Idle twin tail gentle sway
+        avatar.twinTailL.rotation.x = 0.15 + Math.sin(animTime * 1.5) * 0.05;
+        avatar.twinTailR.rotation.x = 0.15 + Math.sin(animTime * 1.5 + 0.5) * 0.05;
+        avatar.twinTailL.rotation.z = Math.sin(animTime * 1.2) * 0.03;
+        avatar.twinTailR.rotation.z = -Math.sin(animTime * 1.2) * 0.03;
+      }
+
+      // Jump pose
+      if (!isGrounded) {
+        avatar.rightArm.rotation.x = -0.6;
+        avatar.leftArm.rotation.x = -0.6;
+        avatar.rightArm.rotation.z = -0.3;
+        avatar.leftArm.rotation.z = 0.3;
+        avatar.rightLeg.rotation.x = 0.4;
+        avatar.leftLeg.rotation.x = -0.4;
+        avatar.rightEar.rotation.z = 0.4;
+        avatar.leftEar.rotation.z = -0.4;
+        avatar.twinTailL.rotation.x = -0.3;
+        avatar.twinTailR.rotation.x = -0.3;
+      }
+
+      // Camera follow
+      controls.target.lerp(
+        new THREE.Vector3(avatar.position.x, avatar.position.y + 1.5, avatar.position.z),
+        5 * delta
+      );
+
+      // Cloud movement
+      scene.children.forEach(child => {
+        if (child.userData.speed) {
+          child.position.x += child.userData.speed;
+          if (child.position.x > 50) child.position.x = -50;
+        }
+      });
+
+      // Particle animation
+      particles.forEach(p => {
+        const v = p.userData.velocity;
+        p.position.x += v.x * delta;
+        p.position.y += v.y * delta;
+        p.position.z += v.z * delta;
+        p.rotation.x += v.rotSpeed * delta;
+        p.rotation.z += v.rotSpeed * 0.7 * delta;
+        if (p.position.y < 0) {
+          p.position.set(
+            (Math.random() - 0.5) * 20,
+            8 + Math.random() * 4,
+            (Math.random() - 0.5) * 20
+          );
+        }
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
