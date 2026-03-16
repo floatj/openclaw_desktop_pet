@@ -688,6 +688,105 @@
     pucciShadow.position.set(1.1, 0.01, 0.3);
     scene.add(pucciShadow);
 
+    // ── Startup animation state ──
+    let isStarting = true;
+    let startTimer = 0;
+    const START_LOGO_DURATION = 2.0;
+    const START_LOGO_FADE_DURATION = 0.6;
+    const START_HOLE_OPEN_DURATION = 0.8;
+    const START_RABBIT_JUMP_DURATION = 1.0;
+    const START_PUCCI_JUMP_DURATION = 0.7;
+    const START_HOLE_CLOSE_DURATION = 0.4;
+
+    // Hide avatar and pucci initially (below ground)
+    avatar.position.y = -3;
+    avatar.visible = false;
+    pucci.position.y = -3;
+    pucci.visible = false;
+    shadowPlane.visible = false;
+    pucciShadow.visible = false;
+
+    // ── 3D NZXT Logo ──
+    function createNZXTLogo() {
+      const group = new THREE.Group();
+
+      // Create canvas texture matching NZXT brand: white bold text on purple bg
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 192;
+      const ctx = canvas.getContext('2d');
+
+      // Purple rounded rectangle background
+      const rx = 20, bgX = 32, bgY = 16, bgW = 448, bgH = 160;
+      ctx.beginPath();
+      ctx.moveTo(bgX + rx, bgY);
+      ctx.lineTo(bgX + bgW - rx, bgY);
+      ctx.quadraticCurveTo(bgX + bgW, bgY, bgX + bgW, bgY + rx);
+      ctx.lineTo(bgX + bgW, bgY + bgH - rx);
+      ctx.quadraticCurveTo(bgX + bgW, bgY + bgH, bgX + bgW - rx, bgY + bgH);
+      ctx.lineTo(bgX + rx, bgY + bgH);
+      ctx.quadraticCurveTo(bgX, bgY + bgH, bgX, bgY + bgH - rx);
+      ctx.lineTo(bgX, bgY + rx);
+      ctx.quadraticCurveTo(bgX, bgY, bgX + rx, bgY);
+      ctx.closePath();
+      ctx.fillStyle = '#3B0764';
+      ctx.fill();
+
+      // White bold "NZXT" text — use heaviest available font
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 110px "Arial Black", "Impact", "Helvetica Neue", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.letterSpacing = '6px';
+      ctx.fillText('NZXT', 256, 100);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.needsUpdate = true;
+
+      // Front face plane
+      const frontMat = new THREE.MeshBasicMaterial({
+        map: texture, transparent: true, opacity: 0, depthWrite: false,
+      });
+      const aspect = canvas.width / canvas.height;
+      const frontPlane = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 2.8 / aspect), frontMat);
+      frontPlane.position.z = 0.08;
+      group.add(frontPlane);
+
+      // 3D extrusion behind (slightly smaller, dark purple)
+      const sideMat = new THREE.MeshStandardMaterial({
+        color: 0x2A0550, transparent: true, opacity: 0,
+      });
+      const sideBox = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.8 / aspect, 0.15), sideMat);
+      group.add(sideBox);
+
+      // Soft glow behind logo
+      const glowCanvas = document.createElement('canvas');
+      glowCanvas.width = 256;
+      glowCanvas.height = 128;
+      const gctx = glowCanvas.getContext('2d');
+      const grad = gctx.createRadialGradient(128, 64, 10, 128, 64, 128);
+      grad.addColorStop(0, 'rgba(80, 40, 160, 0.5)');
+      grad.addColorStop(0.6, 'rgba(60, 20, 120, 0.2)');
+      grad.addColorStop(1, 'rgba(60, 20, 120, 0)');
+      gctx.fillStyle = grad;
+      gctx.fillRect(0, 0, 256, 128);
+      const glowTexture = new THREE.CanvasTexture(glowCanvas);
+      const glowMat = new THREE.MeshBasicMaterial({
+        map: glowTexture, transparent: true, opacity: 0, depthWrite: false,
+      });
+      const glowPlane = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 2.2), glowMat);
+      glowPlane.position.z = -0.1;
+      group.add(glowPlane);
+
+      group.position.set(0.4, 2.5, 0);
+      group.visible = false; // start hidden to prevent first-frame flash
+      group.userData = { frontMat, sideMat, glowMat };
+      return group;
+    }
+
+    const nzxtLogo = createNZXTLogo();
+    scene.add(nzxtLogo);
+
     // ── Quit animation state ──
     let isQuitting = false;
     let quitTimer = 0;
@@ -748,7 +847,7 @@
     }
 
     // Double-click triggers a random action
-    document.addEventListener('dblclick', () => { if (!isQuitting) pickNextAction(); });
+    document.addEventListener('dblclick', () => { if (!isQuitting && !isStarting) pickNextAction(); });
 
     // Drag window on mousedown (canvas covers drag region, so use Tauri API directly)
     let isDragging = false;
@@ -788,7 +887,7 @@
     // ── Single click: headpat detection ──
     let headpatActive = false;
     document.addEventListener('click', (e) => {
-      if (headpatActive || isQuitting) return;
+      if (headpatActive || isQuitting || isStarting) return;
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
       raycaster.setFromCamera(mouse, camera);
@@ -854,16 +953,16 @@
       animTime += delta;
       actionTimer += delta;
 
-      if (!isQuitting && actionTimer > nextActionDelay && currentAction !== 'jump' && currentAction !== 'sneeze') pickNextAction();
+      if (!isQuitting && !isStarting && actionTimer > nextActionDelay && currentAction !== 'jump' && currentAction !== 'sneeze') pickNextAction();
 
       // Bounce physics
-      if (currentAction === 'jump' && actionTimer < 0.01) bounceVel = 5;
+      if (!isStarting && currentAction === 'jump' && actionTimer < 0.01) bounceVel = 5;
       if (bounceVel !== 0 || bounceY > 0) {
         bounceVel -= 12 * delta;
         bounceY += bounceVel * delta;
         if (bounceY <= 0) { bounceY = 0; bounceVel = 0; }
       }
-      if (!isQuitting) {
+      if (!isQuitting && !isStarting) {
         avatar.position.y = 0.75 + bounceY;
 
         // Shadow
@@ -1347,6 +1446,244 @@
           pucciShadow.scale.set(ps, ps, 1);
           pucciShadow.material.opacity = 0.12 * ps;
         }
+      }
+
+      // ── Startup animation sequence ──
+      if (isStarting) {
+        startTimer += delta;
+
+        const s1End = START_LOGO_DURATION;
+        const s2End = s1End + START_LOGO_FADE_DURATION;
+        const s3End = s2End + START_HOLE_OPEN_DURATION;
+        const s4End = s3End + START_RABBIT_JUMP_DURATION;
+        const s5End = s4End + START_PUCCI_JUMP_DURATION;
+        const s6End = s5End + START_HOLE_CLOSE_DURATION;
+
+        const logo = nzxtLogo;
+        const mats = logo.userData;
+
+        if (startTimer < s1End) {
+          // ── Phase 1: NZXT Logo appears ──
+          // Small delay before showing to avoid first-frame artifacts
+          if (startTimer < 0.05) {
+            logo.visible = false;
+          } else {
+            logo.visible = true;
+            const fadeP = Math.min((startTimer - 0.05) / 0.8, 1); // fade in over 0.8s
+            const easeOut = 1 - Math.pow(1 - fadeP, 3);
+
+            // Smooth fade in (no oscillation during fade)
+            mats.frontMat.opacity = easeOut;
+            mats.sideMat.opacity = easeOut;
+
+            // Glow: only pulse after fully faded in
+            const glowBase = easeOut * 0.6;
+            const glowPulse = fadeP >= 1 ? Math.sin(startTimer * 3) * 0.1 : 0;
+            mats.glowMat.opacity = glowBase + glowPulse;
+
+            // Scale: smooth ease-out with slight overshoot
+            const scaleT = Math.min(easeOut * 1.05, 1);
+            logo.scale.set(scaleT, scaleT, scaleT);
+
+            // Gentle floating and rotation
+            logo.position.y = 2.5 + Math.sin(startTimer * 1.5) * 0.08;
+            logo.rotation.y = Math.sin(startTimer * 0.8) * 0.06;
+          }
+
+        } else if (startTimer < s2End) {
+          // ── Phase 2: Logo fades out, prepare for hole ──
+          const p = (startTimer - s1End) / START_LOGO_FADE_DURATION;
+          const fadeOut = 1 - p * p; // ease-in fade
+
+          mats.frontMat.opacity = fadeOut;
+          mats.sideMat.opacity = fadeOut;
+          mats.glowMat.opacity = fadeOut * 0.5;
+
+          // Logo rises and shrinks
+          logo.position.y = 2.5 + p * 1.0;
+          const shrink = 1 - p * 0.3;
+          logo.scale.set(shrink, shrink, shrink);
+
+        } else if (startTimer < s3End) {
+          // ── Phase 3: Hole opens on ground ──
+          logo.visible = false;
+          const p = (startTimer - s2End) / START_HOLE_OPEN_DURATION;
+          const easeOut = 1 - Math.pow(1 - p, 3);
+
+          holePlane.visible = true;
+          holeRim.visible = true;
+          const holeScale = easeOut * 1.5;
+          holePlane.scale.set(holeScale, holeScale, 1);
+          holeRim.scale.set(holeScale, holeScale, 1);
+          holeRimMat.opacity = 0.3 + Math.sin(startTimer * 10) * 0.15;
+
+        } else if (startTimer < s4End) {
+          // ── Phase 4: Rabbit jumps out of hole! ──
+          const p = (startTimer - s3End) / START_RABBIT_JUMP_DURATION;
+          avatar.visible = true;
+
+          // Keep hole open + pulsing
+          holePlane.scale.set(1.5, 1.5, 1);
+          holeRim.scale.set(1.5, 1.5, 1);
+          holeRimMat.opacity = 0.4 + Math.sin(startTimer * 12) * 0.15;
+
+          if (p < 0.5) {
+            // Rising from hole
+            const riseP = p / 0.5;
+            const easeOut = 1 - Math.pow(1 - riseP, 2);
+            avatar.position.y = -2.5 + easeOut * 3.25; // -2.5 → 0.75
+            // Spinning while rising
+            avatar.rotation.y += delta * 5;
+            // Scale grows
+            const s = 0.6 + easeOut * 0.4;
+            avatar.scale.set(s, s, s);
+            // Arms up
+            a.rightArm.rotation.x = -2.5 + easeOut * 2.0;
+            a.leftArm.rotation.x = -2.5 + easeOut * 2.0;
+            a.rightArm.rotation.z = -0.5 + Math.sin(startTimer * 10) * 0.3;
+            a.leftArm.rotation.z = 0.5 - Math.sin(startTimer * 10) * 0.3;
+            // Legs kicking
+            a.rightLeg.rotation.x = Math.sin(startTimer * 12) * 0.6;
+            a.leftLeg.rotation.x = Math.sin(startTimer * 12 + 1.5) * 0.6;
+            // Ears flapping
+            a.rightEar.rotation.z = Math.sin(startTimer * 14) * 0.4;
+            a.leftEar.rotation.z = -Math.sin(startTimer * 14) * 0.4;
+            // Twin tails whip
+            a.twinTailL.rotation.x = 0.15 + Math.sin(startTimer * 10) * 0.4;
+            a.twinTailR.rotation.x = 0.15 - Math.sin(startTimer * 10) * 0.4;
+          } else {
+            // Landing bounce
+            const landP = (p - 0.5) / 0.5;
+            const bounce = Math.sin(landP * Math.PI) * 0.3 * (1 - landP);
+            avatar.position.y = 0.75 + bounce;
+            // Face forward
+            avatar.rotation.y = lp(avatar.rotation.y, 0, 4, delta);
+            avatar.scale.set(1, 1, 1);
+            // Arms settle
+            a.rightArm.rotation.x = lp(a.rightArm.rotation.x, 0, 6, delta);
+            a.leftArm.rotation.x = lp(a.leftArm.rotation.x, 0, 6, delta);
+            a.rightArm.rotation.z = lp(a.rightArm.rotation.z, 0, 5, delta);
+            a.leftArm.rotation.z = lp(a.leftArm.rotation.z, 0, 5, delta);
+            a.rightLeg.rotation.x = lp(a.rightLeg.rotation.x, 0, 5, delta);
+            a.leftLeg.rotation.x = lp(a.leftLeg.rotation.x, 0, 5, delta);
+            // Ears settle
+            a.rightEar.rotation.z = lp(a.rightEar.rotation.z, 0.12, 5, delta);
+            a.leftEar.rotation.z = lp(a.leftEar.rotation.z, -0.12, 5, delta);
+            a.twinTailL.rotation.x = lp(a.twinTailL.rotation.x, 0.15, 4, delta);
+            a.twinTailR.rotation.x = lp(a.twinTailR.rotation.x, 0.15, 4, delta);
+            // Head happy
+            a.head.rotation.z = Math.sin(startTimer * 6) * 0.1 * (1 - landP);
+            a.head.rotation.x = lp(a.head.rotation.x, 0, 4, delta);
+            a.head.rotation.y = lp(a.head.rotation.y, 0, 4, delta);
+            a.head.position.y = 1.75;
+          }
+
+        } else if (startTimer < s5End) {
+          // ── Phase 5: Pucci pops out! ──
+          const p = (startTimer - s4End) / START_PUCCI_JUMP_DURATION;
+          pucci.visible = true;
+
+          // Hole still open but starting to shrink
+          const holeScale = 1.5 - p * 0.3;
+          holePlane.scale.set(holeScale, holeScale, 1);
+          holeRim.scale.set(holeScale, holeScale, 1);
+          holeRimMat.opacity = (0.4 - p * 0.2) + Math.sin(startTimer * 10) * 0.1;
+
+          // Keep rabbit settled
+          avatar.position.y = 0.75;
+          avatar.rotation.y = lp(avatar.rotation.y, 0, 3, delta);
+          // Rabbit watches pucci - turns to look
+          a.head.rotation.y = lp(a.head.rotation.y, 0.3, 4, delta);
+          // Idle breathing
+          a.head.position.y = 1.75 + Math.sin(animTime * 2) * 0.025;
+          a.rightArm.rotation.x = lp(a.rightArm.rotation.x, 0, 5, delta);
+          a.leftArm.rotation.x = lp(a.leftArm.rotation.x, 0, 5, delta);
+
+          if (p < 0.5) {
+            // Pucci rising from hole
+            const riseP = p / 0.5;
+            const easeOut = 1 - Math.pow(1 - riseP, 2);
+            pucci.position.y = -2.5 + easeOut * 2.5; // rises to 0
+            pucci.position.x = lp(pucci.position.x, 1.1, 4, delta);
+            pucci.position.z = lp(pucci.position.z, 0.3, 4, delta);
+            // Spin while rising
+            pucci.rotation.y += delta * 6;
+            const ps = 0.55 * (0.5 + easeOut * 0.5);
+            pucci.scale.set(ps, ps, ps);
+            // Excited eyes
+            pucci.leftEye.scale.set(1.3, 1.3, 1);
+            pucci.rightEye.scale.set(1.3, 1.3, 1);
+            pucci.mouthOuter.scale.set(1.1, 1.3, 1);
+            pucci.mouthInner.scale.set(1.1, 1.3, 1);
+          } else {
+            // Pucci landing bounce
+            const landP = (p - 0.5) / 0.5;
+            const bounce = Math.sin(landP * Math.PI) * 0.2 * (1 - landP);
+            pucci.position.y = bounce;
+            pucci.position.x = lp(pucci.position.x, 1.1, 4, delta);
+            pucci.position.z = lp(pucci.position.z, 0.3, 4, delta);
+            pucci.rotation.y = lp(pucci.rotation.y, 0, 4, delta);
+            pucci.scale.set(0.55, 0.55, 0.55);
+            pucci.rotation.x = lp(pucci.rotation.x, 0, 4, delta);
+            // Happy expression settling
+            const settle = 1 - landP;
+            pucci.leftEye.scale.set(1 + settle * 0.2, 1 + settle * 0.2, 1);
+            pucci.rightEye.scale.set(1 + settle * 0.2, 1 + settle * 0.2, 1);
+            pucci.mouthOuter.scale.set(1, 1 + settle * 0.15, 1);
+            pucci.mouthInner.scale.set(1, 1 + settle * 0.15, 1);
+            pucci.bodyMesh.rotation.z = Math.sin(startTimer * 6) * 0.06 * settle;
+          }
+
+        } else if (startTimer < s6End) {
+          // ── Phase 6: Hole closes ──
+          const p = (startTimer - s5End) / START_HOLE_CLOSE_DURATION;
+          const elastic = 1 - Math.pow(1 - p, 2);
+          const closeScale = 1.2 * (1 - elastic);
+          holePlane.scale.set(closeScale, closeScale, 1);
+          holeRim.scale.set(closeScale * 1.1, closeScale * 1.1, 1);
+          holeRimMat.opacity = 0.3 * (1 - elastic);
+
+          // Characters settle
+          avatar.position.y = 0.75;
+          pucci.position.y = lp(pucci.position.y, 0, 5, delta);
+          pucci.position.x = lp(pucci.position.x, 1.1, 3, delta);
+
+          // Show shadows fading in
+          shadowPlane.visible = true;
+          pucciShadow.visible = true;
+          shadowPlane.material.opacity = 0.15 * elastic;
+          pucciShadow.material.opacity = 0.12 * elastic;
+
+        } else {
+          // ── Startup complete! Enter idle state ──
+          isStarting = false;
+          holePlane.visible = false;
+          holeRim.visible = false;
+          holePlane.scale.set(0, 0, 0);
+          holeRim.scale.set(0, 0, 0);
+          nzxtLogo.visible = false;
+
+          // Reset to idle
+          avatar.position.y = 0.75;
+          avatar.scale.set(1, 1, 1);
+          avatar.rotation.y = 0;
+          pucci.position.set(1.1, 0, 0.3);
+          pucci.scale.set(0.55, 0.55, 0.55);
+          pucci.rotation.set(0, 0, 0);
+
+          // Show shadows
+          shadowPlane.visible = true;
+          pucciShadow.visible = true;
+          shadowPlane.material.opacity = 0.15;
+          pucciShadow.material.opacity = 0.12;
+
+          currentAction = 'idle';
+          actionTimer = 0;
+          nextActionDelay = 3 + Math.random() * 4;
+        }
+
+        renderer.render(scene, camera);
+        return; // Skip normal animation during startup
       }
 
       // ── Quit animation sequence ──
