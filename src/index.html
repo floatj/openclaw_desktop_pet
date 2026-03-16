@@ -66,7 +66,7 @@
 
       const SKIN = '#FFE0CC', SKIN_SHADOW = '#F0D0B8';
       const HAIR = '#8EB8D4', HAIR_DARK = '#6A9AB8', HAIR_LIGHT = '#B8D8EE';
-      const DRESS = '#3B5998', DRESS_LIGHT = '#4A6DAD', DRESS_DARK = '#2C4470';
+      const DRESS = '#2B4A8C', DRESS_LIGHT = '#3B5FA0', DRESS_DARK = '#1E3566';
       const APRON = '#FFFFFF', APRON_SHADOW = '#E8E8F0';
       const BOW = '#4A90D9';
 
@@ -139,15 +139,15 @@
       ctx.fillStyle = BOW; ctx.fillRect(23, 21, 2, 1);
       ctx.fillStyle = '#3A7BC8'; ctx.fillRect(22, 22, 1, 1); ctx.fillRect(25, 22, 1, 1);
       ctx.fillStyle = BOW; ctx.fillRect(23, 22, 2, 1);
-      // White apron
-      ctx.fillStyle = APRON; ctx.fillRect(22, 23, 4, 8);
-      ctx.fillStyle = APRON_SHADOW; ctx.fillRect(22, 23, 4, 1); // apron top edge
-      ctx.fillStyle = '#F0F0F8'; ctx.fillRect(23, 26, 2, 1); // bunny logo hint
-      // Apron strings
-      ctx.fillStyle = APRON; ctx.fillRect(21, 23, 1, 1); ctx.fillRect(26, 23, 1, 1);
-      // Dress pleats visible on sides
-      ctx.fillStyle = DRESS_DARK; ctx.fillRect(20, 25, 2, 7); ctx.fillRect(26, 25, 2, 7);
-      ctx.fillStyle = DRESS_LIGHT; ctx.fillRect(21, 26, 1, 5); ctx.fillRect(26, 26, 1, 5);
+      // Pleat shadows
+      ctx.fillStyle = DRESS_DARK;
+      ctx.fillRect(20, 25, 1, 7); ctx.fillRect(23, 26, 1, 6); ctx.fillRect(27, 25, 1, 7);
+      // Pleat highlights
+      ctx.fillStyle = DRESS_LIGHT;
+      ctx.fillRect(21, 26, 1, 5); ctx.fillRect(24, 26, 1, 5);
+      // White apron (narrow center - 2px)
+      ctx.fillStyle = APRON; ctx.fillRect(23, 23, 2, 8);
+      ctx.fillStyle = APRON_SHADOW; ctx.fillRect(23, 23, 2, 1);
       // White trim at bottom
       ctx.fillStyle = '#FFFFFF'; ctx.fillRect(20, 31, 8, 1);
 
@@ -360,13 +360,20 @@
     let bounceVel = 0;
     let bounceY = 0;
 
-    const actions = ['idle', 'wave', 'jump', 'spin', 'look', 'dance'];
+    const actions = ['idle', 'wave', 'jump', 'spin', 'look', 'dance', 'sit', 'sleep', 'run', 'stretch', 'sneeze', 'nod'];
+    // Weights: idle/sit/sleep last longer, active ones shorter
+    const actionDurations = {
+      idle: [3, 5], wave: [2, 3], jump: [1, 1], spin: [2, 3], look: [2, 4],
+      dance: [3, 5], sit: [4, 7], sleep: [5, 8], run: [2, 4], stretch: [2, 3],
+      sneeze: [1.5, 2], nod: [2, 3],
+    };
 
     function pickNextAction() {
       const prev = currentAction;
       do { currentAction = actions[Math.floor(Math.random() * actions.length)]; } while (currentAction === prev);
       actionTimer = 0;
-      nextActionDelay = 2.5 + Math.random() * 4;
+      const dur = actionDurations[currentAction] || [2, 4];
+      nextActionDelay = dur[0] + Math.random() * (dur[1] - dur[0]);
     }
 
     // Double-click triggers a random action
@@ -400,7 +407,7 @@
       animTime += delta;
       actionTimer += delta;
 
-      if (actionTimer > nextActionDelay && currentAction !== 'jump') pickNextAction();
+      if (actionTimer > nextActionDelay && currentAction !== 'jump' && currentAction !== 'sneeze') pickNextAction();
 
       // Bounce physics
       if (currentAction === 'jump' && actionTimer < 0.01) bounceVel = 5;
@@ -515,6 +522,182 @@
           a.head.rotation.x=lp(a.head.rotation.x,0,3,delta);
           break;
         }
+
+        case 'sit': {
+          // Sit down: legs forward, body lower
+          a.position.y = lp(a.position.y, 0.3, 3, delta);
+          a.rightLeg.rotation.x = lp(a.rightLeg.rotation.x, -1.4, 4, delta);
+          a.leftLeg.rotation.x = lp(a.leftLeg.rotation.x, -1.4, 4, delta);
+          a.rightArm.rotation.x = lp(a.rightArm.rotation.x, -0.2, 4, delta);
+          a.leftArm.rotation.x = lp(a.leftArm.rotation.x, -0.2, 4, delta);
+          a.rightArm.rotation.z = lp(a.rightArm.rotation.z, -0.15, 4, delta);
+          a.leftArm.rotation.z = lp(a.leftArm.rotation.z, 0.15, 4, delta);
+          // Gentle head sway while sitting
+          a.head.position.y = 1.75 + Math.sin(animTime*1.5)*0.02;
+          a.head.rotation.z = Math.sin(animTime*1.2)*0.05;
+          a.head.rotation.y = lp(a.head.rotation.y, Math.sin(animTime*0.8)*0.2, 2, delta);
+          a.head.rotation.x = lp(a.head.rotation.x, 0.1, 3, delta);
+          a.rightEar.rotation.z = 0.12 + Math.sin(animTime*2)*0.05;
+          a.leftEar.rotation.z = -0.12 - Math.sin(animTime*2)*0.05;
+          a.twinTailL.rotation.x = 0.15+Math.sin(animTime*1.2)*0.03;
+          a.twinTailR.rotation.x = 0.15+Math.sin(animTime*1.2+0.3)*0.03;
+          a.rotation.y = lp(a.rotation.y, 0, 2, delta);
+          break;
+        }
+
+        case 'sleep': {
+          // Sitting doze off: sit down, head droops, breathing
+          a.position.y = lp(a.position.y, 0.3, 3, delta);
+          // Legs folded like sitting
+          a.rightLeg.rotation.x = lp(a.rightLeg.rotation.x, -1.4, 3, delta);
+          a.leftLeg.rotation.x = lp(a.leftLeg.rotation.x, -1.4, 3, delta);
+          // Arms resting on lap
+          a.rightArm.rotation.x = lp(a.rightArm.rotation.x, -0.5, 3, delta);
+          a.leftArm.rotation.x = lp(a.leftArm.rotation.x, -0.5, 3, delta);
+          a.rightArm.rotation.z = lp(a.rightArm.rotation.z, -0.1, 3, delta);
+          a.leftArm.rotation.z = lp(a.leftArm.rotation.z, 0.1, 3, delta);
+          // Head drooping forward + tilted to side
+          const breathSlow = Math.sin(animTime * 1.2);
+          a.head.position.y = 1.75;
+          a.head.rotation.x = lp(a.head.rotation.x, 0.3 + breathSlow * 0.04, 2, delta);
+          a.head.rotation.z = lp(a.head.rotation.z, 0.2 + breathSlow * 0.03, 2, delta);
+          a.head.rotation.y = lp(a.head.rotation.y, 0, 2, delta);
+          // Ears droop down
+          a.rightEar.rotation.z = lp(a.rightEar.rotation.z, 0.6, 2, delta);
+          a.leftEar.rotation.z = lp(a.leftEar.rotation.z, -0.6, 2, delta);
+          // Gentle breathing sway on twin tails
+          a.twinTailL.rotation.x = 0.15 + breathSlow * 0.03;
+          a.twinTailR.rotation.x = 0.15 + breathSlow * 0.03;
+          a.twinTailL.rotation.z = lp(a.twinTailL.rotation.z, 0.05, 2, delta);
+          a.twinTailR.rotation.z = lp(a.twinTailR.rotation.z, -0.05, 2, delta);
+          a.rotation.y = lp(a.rotation.y, 0, 2, delta);
+          // Shadow breathe
+          shadowPlane.material.opacity = 0.12 + breathSlow * 0.03;
+          break;
+        }
+
+        case 'run': {
+          // Run in place
+          const r = animTime * 12;
+          a.rightArm.rotation.x = Math.sin(r)*1.2;
+          a.leftArm.rotation.x = -Math.sin(r)*1.2;
+          a.rightArm.rotation.z = -0.1;
+          a.leftArm.rotation.z = 0.1;
+          a.rightLeg.rotation.x = -Math.sin(r)*1.0;
+          a.leftLeg.rotation.x = Math.sin(r)*1.0;
+          // Bounce up and down
+          a.position.y = 0.75 + Math.abs(Math.sin(r))*0.12;
+          a.head.position.y = 1.75 + Math.abs(Math.sin(r))*0.06;
+          a.head.rotation.z = lp(a.head.rotation.z, 0, 5, delta);
+          a.head.rotation.y = lp(a.head.rotation.y, 0, 3, delta);
+          a.head.rotation.x = lp(a.head.rotation.x, -0.1, 3, delta); // lean forward
+          // Ears flap
+          a.rightEar.rotation.z = 0.12 + Math.sin(r*1.5)*0.2;
+          a.leftEar.rotation.z = -0.12 - Math.sin(r*1.5)*0.2;
+          // Twin tails bounce
+          a.twinTailL.rotation.x = 0.15 + Math.sin(r)*0.35;
+          a.twinTailR.rotation.x = 0.15 - Math.sin(r)*0.35;
+          a.twinTailL.rotation.z = Math.sin(r*0.8)*0.2;
+          a.twinTailR.rotation.z = -Math.sin(r*0.8)*0.2;
+          // Face forward
+          a.rotation.y = lp(a.rotation.y, 0, 3, delta);
+          break;
+        }
+
+        case 'stretch': {
+          // Morning stretch: arms up, then down
+          const phase = Math.min(actionTimer / 2, 1); // 0→1 over 2 seconds
+          const up = phase < 0.5 ? phase * 2 : 2 - phase * 2; // up then down
+          a.rightArm.rotation.x = lp(a.rightArm.rotation.x, -2.8 * up, 5, delta);
+          a.leftArm.rotation.x = lp(a.leftArm.rotation.x, -2.8 * up, 5, delta);
+          a.rightArm.rotation.z = lp(a.rightArm.rotation.z, -0.4 * up, 5, delta);
+          a.leftArm.rotation.z = lp(a.leftArm.rotation.z, 0.4 * up, 5, delta);
+          a.rightLeg.rotation.x = lp(a.rightLeg.rotation.x, 0, 5, delta);
+          a.leftLeg.rotation.x = lp(a.leftLeg.rotation.x, 0, 5, delta);
+          // Tippy toes at peak
+          a.position.y = 0.75 + up * 0.15;
+          a.head.position.y = 1.75 + up * 0.05;
+          a.head.rotation.x = lp(a.head.rotation.x, -0.2 * up, 3, delta); // look up
+          a.head.rotation.z = lp(a.head.rotation.z, 0, 3, delta);
+          a.head.rotation.y = lp(a.head.rotation.y, 0, 3, delta);
+          a.rightEar.rotation.z = 0.12 + up * 0.15;
+          a.leftEar.rotation.z = -0.12 - up * 0.15;
+          a.twinTailL.rotation.x = 0.15 - up * 0.2;
+          a.twinTailR.rotation.x = 0.15 - up * 0.2;
+          a.rotation.y = lp(a.rotation.y, 0, 2, delta);
+          if (actionTimer > 2.5) pickNextAction();
+          break;
+        }
+
+        case 'sneeze': {
+          // Build up → achoo!
+          const t = actionTimer;
+          if (t < 0.8) {
+            // Building up - lean back, scrunch
+            const buildup = t / 0.8;
+            a.head.rotation.x = lp(a.head.rotation.x, -0.3 * buildup, 8, delta);
+            a.rightArm.rotation.x = lp(a.rightArm.rotation.x, -0.3 * buildup, 5, delta);
+            a.leftArm.rotation.x = lp(a.leftArm.rotation.x, -0.3 * buildup, 5, delta);
+            a.rightEar.rotation.z = 0.12 + buildup * 0.2;
+            a.leftEar.rotation.z = -0.12 - buildup * 0.2;
+          } else if (t < 1.0) {
+            // Achoo! snap forward
+            a.head.rotation.x = lp(a.head.rotation.x, 0.5, 20, delta);
+            a.rightArm.rotation.x = lp(a.rightArm.rotation.x, 0.3, 15, delta);
+            a.leftArm.rotation.x = lp(a.leftArm.rotation.x, 0.3, 15, delta);
+            a.position.y = 0.75 + 0.08;
+            a.rightEar.rotation.z = 0.5;
+            a.leftEar.rotation.z = -0.5;
+          } else {
+            // Recovery
+            a.head.rotation.x = lp(a.head.rotation.x, 0, 3, delta);
+            a.rightArm.rotation.x = lp(a.rightArm.rotation.x, 0, 3, delta);
+            a.leftArm.rotation.x = lp(a.leftArm.rotation.x, 0, 3, delta);
+            a.position.y = lp(a.position.y, 0.75, 3, delta);
+            a.rightEar.rotation.z = lp(a.rightEar.rotation.z, 0.12, 3, delta);
+            a.leftEar.rotation.z = lp(a.leftEar.rotation.z, -0.12, 3, delta);
+          }
+          a.rightArm.rotation.z = lp(a.rightArm.rotation.z, 0, 3, delta);
+          a.leftArm.rotation.z = lp(a.leftArm.rotation.z, 0, 3, delta);
+          a.rightLeg.rotation.x = lp(a.rightLeg.rotation.x, 0, 5, delta);
+          a.leftLeg.rotation.x = lp(a.leftLeg.rotation.x, 0, 5, delta);
+          a.head.rotation.z = lp(a.head.rotation.z, 0, 3, delta);
+          a.head.rotation.y = lp(a.head.rotation.y, 0, 3, delta);
+          a.head.position.y = 1.75;
+          a.rotation.y = lp(a.rotation.y, 0, 2, delta);
+          a.twinTailL.rotation.x = 0.15; a.twinTailR.rotation.x = 0.15;
+          if (t > 1.8) pickNextAction();
+          break;
+        }
+
+        case 'nod': {
+          // Enthusiastic nodding
+          a.head.rotation.x = Math.sin(animTime*6)*0.25;
+          a.head.rotation.z = lp(a.head.rotation.z, 0, 5, delta);
+          a.head.rotation.y = lp(a.head.rotation.y, 0, 3, delta);
+          a.head.position.y = 1.75 + Math.sin(animTime*6)*0.03;
+          a.rightArm.rotation.x = lp(a.rightArm.rotation.x, 0, 5, delta);
+          a.leftArm.rotation.x = lp(a.leftArm.rotation.x, 0, 5, delta);
+          a.rightArm.rotation.z = Math.sin(animTime*3)*0.05;
+          a.leftArm.rotation.z = -Math.sin(animTime*3)*0.05;
+          a.rightLeg.rotation.x = lp(a.rightLeg.rotation.x, 0, 5, delta);
+          a.leftLeg.rotation.x = lp(a.leftLeg.rotation.x, 0, 5, delta);
+          a.rightEar.rotation.z = 0.12 + Math.sin(animTime*6)*0.1;
+          a.leftEar.rotation.z = -0.12 - Math.sin(animTime*6)*0.1;
+          a.twinTailL.rotation.x = 0.15+Math.sin(animTime*6)*0.08;
+          a.twinTailR.rotation.x = 0.15+Math.sin(animTime*6+0.5)*0.08;
+          a.twinTailL.rotation.z = Math.sin(animTime*3)*0.03;
+          a.twinTailR.rotation.z = -Math.sin(animTime*3)*0.03;
+          a.rotation.y = lp(a.rotation.y, 0, 2, delta);
+          break;
+        }
+      }
+
+      // Reset body rotation
+      a.rotation.x = lp(a.rotation.x, 0, 3, delta);
+      // Reset position for non-sit/sleep/run/stretch actions
+      if (!['sit','sleep','run','stretch','sneeze'].includes(currentAction)) {
+        if (bounceY === 0) a.position.y = lp(a.position.y, 0.75, 3, delta);
       }
 
       renderer.render(scene, camera);
