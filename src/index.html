@@ -8,9 +8,68 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { overflow: hidden; background: transparent; width: 100%; height: 100%; }
     canvas { display: block; background: transparent; }
+
+    /* Notification bubble */
+    #notification-bubble {
+      display: none;
+      position: fixed;
+      top: 8%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      color: #333;
+      padding: 12px 20px;
+      border-radius: 16px;
+      font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
+      font-size: 15px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      z-index: 1000;
+      max-width: 280px;
+      text-align: center;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+    /* Context menu */
+    .context-menu {
+      position: fixed;
+      z-index: 10000;
+      display: none;
+      background: rgba(26, 26, 46, 0.9);
+      border: 1px solid #4A90D9;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .context-menu .menu-item {
+      padding: 8px 16px;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
+    }
+    .context-menu .menu-item:hover {
+      background: #2B4A8C;
+    }
+
+    #notification-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 8px solid #fff;
+    }
   </style>
 </head>
 <body data-tauri-drag-region>
+  <div id="notification-bubble"></div>
+  <div id="context-menu" class="context-menu">
+    <div class="menu-item" id="menu-test-notify">發送測試通知泡泡</div>
+    <div class="menu-item" id="menu-quit">離開</div>
+  </div>
   <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
@@ -214,6 +273,147 @@
       return texture;
     }
 
+    // ── Dark Skin Texture ──
+    function createDarkSkinTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#0A0A1A';
+      ctx.fillRect(0, 0, 64, 64);
+
+      const SKIN = '#FFE0CC', SKIN_SHADOW = '#F0D0B8';
+      const HAIR = '#8EB8D4', HAIR_DARK = '#6A9AB8', HAIR_LIGHT = '#B8D8EE';
+      const DRESS = '#1A1A2E', DRESS_LIGHT = '#2A2A3E', DRESS_DARK = '#0A0A1A';
+      const APRON = '#3A3A4A', APRON_SHADOW = '#2E2E3A';
+      const BOW = '#6B3FA0';
+
+      // HEAD - FRONT
+      ctx.fillStyle = SKIN; ctx.fillRect(8, 8, 8, 8);
+      ctx.fillStyle = HAIR; ctx.fillRect(8, 8, 8, 3);
+      ctx.fillStyle = HAIR_DARK; ctx.fillRect(8, 8, 8, 1);
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(8, 8, 8, 1);
+      ctx.fillStyle = '#E0E8F0'; ctx.fillRect(9, 8, 1, 1); ctx.fillRect(11, 8, 1, 1); ctx.fillRect(13, 8, 1, 1);
+      ctx.fillStyle = HAIR; ctx.fillRect(8, 9, 8, 2);
+      ctx.fillStyle = HAIR_LIGHT; ctx.fillRect(9, 9, 2, 1); ctx.fillRect(13, 9, 2, 1);
+      ctx.fillStyle = HAIR; ctx.fillRect(8, 11, 1, 5); ctx.fillRect(15, 11, 1, 5);
+      ctx.fillStyle = HAIR_DARK; ctx.fillRect(8, 14, 1, 2); ctx.fillRect(15, 14, 1, 2);
+      ctx.fillStyle = '#4A90D9'; ctx.fillRect(10, 12, 2, 2); ctx.fillRect(13, 12, 2, 2);
+      ctx.fillStyle = '#6AB0E8'; ctx.fillRect(10, 12, 1, 1); ctx.fillRect(14, 12, 1, 1);
+      ctx.fillStyle = '#1A3060'; ctx.fillRect(11, 13, 1, 1); ctx.fillRect(13, 13, 1, 1);
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(10, 12, 1, 1); ctx.fillRect(13, 12, 1, 1);
+      ctx.fillStyle = '#FFB0B0'; ctx.fillRect(9, 14, 2, 1); ctx.fillRect(14, 14, 1, 1);
+      ctx.fillStyle = '#E88A8A'; ctx.fillRect(12, 15, 1, 1);
+      ctx.fillStyle = SKIN_SHADOW; ctx.fillRect(12, 14, 1, 1);
+
+      // HEAD - RIGHT
+      ctx.fillStyle = SKIN; ctx.fillRect(0, 8, 8, 8);
+      ctx.fillStyle = SKIN_SHADOW; ctx.fillRect(0, 8, 2, 8);
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 8, 8, 1);
+      ctx.fillStyle = HAIR; ctx.fillRect(0, 9, 8, 2);
+      ctx.fillStyle = HAIR_DARK; ctx.fillRect(0, 9, 8, 1);
+      ctx.fillStyle = HAIR; ctx.fillRect(0, 11, 4, 5);
+      ctx.fillStyle = HAIR_DARK; ctx.fillRect(0, 14, 3, 2);
+
+      // HEAD - LEFT
+      ctx.fillStyle = SKIN; ctx.fillRect(16, 8, 8, 8);
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(16, 8, 8, 1);
+      ctx.fillStyle = HAIR; ctx.fillRect(16, 9, 8, 2);
+      ctx.fillStyle = HAIR_DARK; ctx.fillRect(16, 9, 8, 1);
+      ctx.fillStyle = HAIR; ctx.fillRect(20, 11, 4, 5);
+      ctx.fillStyle = HAIR_DARK; ctx.fillRect(21, 14, 3, 2);
+
+      // HEAD - BACK
+      ctx.fillStyle = HAIR; ctx.fillRect(24, 8, 8, 8);
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(24, 8, 8, 1);
+      ctx.fillStyle = HAIR_DARK; ctx.fillRect(24, 9, 8, 1);
+      ctx.fillStyle = HAIR_LIGHT; ctx.fillRect(26, 10, 2, 1); ctx.fillRect(28, 12, 2, 1);
+      ctx.fillStyle = HAIR_DARK; ctx.fillRect(24, 14, 8, 2);
+
+      // HEAD - TOP
+      ctx.fillStyle = HAIR; ctx.fillRect(8, 0, 8, 8);
+      ctx.fillStyle = HAIR_DARK; ctx.fillRect(8, 0, 8, 2);
+      ctx.fillStyle = HAIR_LIGHT; ctx.fillRect(10, 3, 2, 2); ctx.fillRect(13, 2, 2, 2);
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(10, 6, 4, 2);
+      ctx.fillStyle = '#E0E8F0'; ctx.fillRect(11, 7, 2, 1);
+
+      // HEAD - BOTTOM
+      ctx.fillStyle = SKIN; ctx.fillRect(16, 0, 8, 8);
+
+      // BODY - FRONT
+      ctx.fillStyle = DRESS; ctx.fillRect(20, 20, 8, 12);
+      ctx.fillStyle = '#CCCCCC'; ctx.fillRect(21, 20, 6, 1);
+      ctx.fillStyle = '#BBBBBB'; ctx.fillRect(20, 20, 1, 1); ctx.fillRect(27, 20, 1, 1);
+      ctx.fillStyle = BOW; ctx.fillRect(23, 21, 2, 1);
+      ctx.fillStyle = '#5A2F90'; ctx.fillRect(22, 22, 1, 1); ctx.fillRect(25, 22, 1, 1);
+      ctx.fillStyle = BOW; ctx.fillRect(23, 22, 2, 1);
+      ctx.fillStyle = DRESS_DARK;
+      ctx.fillRect(20, 25, 1, 7); ctx.fillRect(23, 26, 1, 6); ctx.fillRect(27, 25, 1, 7);
+      ctx.fillStyle = DRESS_LIGHT;
+      ctx.fillRect(21, 26, 1, 5); ctx.fillRect(24, 26, 1, 5);
+      ctx.fillStyle = APRON; ctx.fillRect(23, 23, 2, 8);
+      ctx.fillStyle = APRON_SHADOW; ctx.fillRect(23, 23, 2, 1);
+      ctx.fillStyle = '#4A4A5A'; ctx.fillRect(20, 31, 8, 1);
+
+      // BODY sides
+      ctx.fillStyle = DRESS; ctx.fillRect(16, 20, 4, 12);
+      ctx.fillStyle = '#CCCCCC'; ctx.fillRect(16, 20, 4, 1);
+      ctx.fillStyle = DRESS_DARK; ctx.fillRect(16, 24, 1, 8);
+      ctx.fillStyle = '#4A4A5A'; ctx.fillRect(16, 31, 4, 1);
+      ctx.fillStyle = DRESS; ctx.fillRect(28, 20, 4, 12);
+      ctx.fillStyle = '#CCCCCC'; ctx.fillRect(28, 20, 4, 1);
+      ctx.fillStyle = DRESS_DARK; ctx.fillRect(31, 24, 1, 8);
+      ctx.fillStyle = '#4A4A5A'; ctx.fillRect(28, 31, 4, 1);
+
+      // BODY - BACK
+      ctx.fillStyle = DRESS; ctx.fillRect(32, 20, 8, 12);
+      ctx.fillStyle = '#CCCCCC'; ctx.fillRect(32, 20, 8, 1);
+      ctx.fillStyle = APRON; ctx.fillRect(34, 22, 4, 2);
+      ctx.fillStyle = APRON_SHADOW; ctx.fillRect(35, 22, 2, 2);
+      ctx.fillStyle = APRON; ctx.fillRect(34, 24, 1, 3); ctx.fillRect(37, 24, 1, 3);
+      ctx.fillStyle = DRESS_DARK; ctx.fillRect(32, 25, 2, 7); ctx.fillRect(38, 25, 2, 7);
+      ctx.fillStyle = '#4A4A5A'; ctx.fillRect(32, 31, 8, 1);
+
+      // BODY top/bottom
+      ctx.fillStyle = DRESS; ctx.fillRect(20, 16, 8, 4);
+      ctx.fillStyle = '#CCCCCC'; ctx.fillRect(22, 16, 4, 2);
+      ctx.fillStyle = DRESS; ctx.fillRect(28, 16, 8, 4);
+
+      // RIGHT ARM
+      ctx.fillStyle = DRESS; ctx.fillRect(44, 20, 4, 6);
+      ctx.fillStyle = DRESS_LIGHT; ctx.fillRect(44, 20, 4, 1);
+      ctx.fillStyle = DRESS_DARK; ctx.fillRect(44, 25, 4, 1);
+      ctx.fillStyle = '#DDDDDD'; ctx.fillRect(44, 26, 4, 6);
+      ctx.fillStyle = '#CCCCCC'; ctx.fillRect(44, 26, 4, 1);
+
+      // LEFT ARM
+      ctx.fillStyle = DRESS; ctx.fillRect(36, 52, 4, 6);
+      ctx.fillStyle = DRESS_LIGHT; ctx.fillRect(36, 52, 4, 1);
+      ctx.fillStyle = DRESS_DARK; ctx.fillRect(36, 57, 4, 1);
+      ctx.fillStyle = '#DDDDDD'; ctx.fillRect(36, 58, 4, 6);
+      ctx.fillStyle = '#CCCCCC'; ctx.fillRect(36, 58, 4, 1);
+
+      // RIGHT LEG
+      ctx.fillStyle = '#DDDDDD'; ctx.fillRect(4, 20, 4, 8);
+      ctx.fillStyle = '#CCCCCC'; ctx.fillRect(4, 20, 4, 1);
+      ctx.fillStyle = DRESS; ctx.fillRect(4, 28, 4, 4);
+      ctx.fillStyle = DRESS_LIGHT; ctx.fillRect(5, 28, 2, 1);
+      ctx.fillStyle = BOW; ctx.fillRect(5, 29, 2, 1);
+
+      // LEFT LEG
+      ctx.fillStyle = '#DDDDDD'; ctx.fillRect(20, 52, 4, 8);
+      ctx.fillStyle = '#CCCCCC'; ctx.fillRect(20, 52, 4, 1);
+      ctx.fillStyle = DRESS; ctx.fillRect(20, 60, 4, 4);
+      ctx.fillStyle = DRESS_LIGHT; ctx.fillRect(21, 60, 2, 1);
+      ctx.fillStyle = BOW; ctx.fillRect(21, 61, 2, 1);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestFilter;
+      return texture;
+    }
+
     // ── Build Character ──
     function createMinecraftAvatar() {
       const avatar = new THREE.Group();
@@ -351,6 +551,58 @@
     const avatar = createMinecraftAvatar();
     scene.add(avatar);
 
+    // Store material reference for dark mode toggle
+    const avatarMaterial = avatar.head.children[0].material;
+
+    // ── Headpat blush cheek ──
+    const blushMat = new THREE.MeshStandardMaterial({ color: 0xFFAAAA, roughness: 0.5, transparent: true, opacity: 0.8 });
+    const blushL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.05), blushMat);
+    blushL.position.set(-0.35, -0.05, 0.48);
+    blushL.visible = false;
+    avatar.head.add(blushL);
+    const blushR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.05), blushMat);
+    blushR.position.set(0.35, -0.05, 0.48);
+    blushR.visible = false;
+    avatar.head.add(blushR);
+    avatar.blushL = blushL;
+    avatar.blushR = blushR;
+
+    // ── Right-hand carrot (for eat action) ──
+    function createCarrot() {
+      const carrot = new THREE.Group();
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xE87830, roughness: 0.6 });
+      const leafMat = new THREE.MeshStandardMaterial({ color: 0x4CAF50, roughness: 0.5 });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 0.08), bodyMat);
+      carrot.add(body);
+      const leaf = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, 0.06), leafMat);
+      leaf.position.y = 0.22;
+      carrot.add(leaf);
+      const leaf2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 0.04), leafMat);
+      leaf2.position.set(0.04, 0.28, 0);
+      carrot.add(leaf2);
+      return carrot;
+    }
+
+    // Carrot on right hand (eat action only)
+    const eatCarrot = createCarrot();
+    eatCarrot.position.set(0, -0.6, 0.4);
+    eatCarrot.visible = false;
+    avatar.rightArm.add(eatCarrot);
+    avatar.eatCarrot = eatCarrot;
+
+    // ── Left-hand carrot accessory (always visible) ──
+    const leftCarrot = createCarrot();
+    leftCarrot.position.set(0, -1.65, 0.15);
+    leftCarrot.visible = true;
+    avatar.leftArm.add(leftCarrot);
+    avatar.leftCarrot = leftCarrot;
+
+    // ── Raycaster for click detection ──
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    // Store headMesh reference for raycasting
+    const headMesh = avatar.head.children[0];
+
     // ── Pucci (NZXT Mascot Pet) ──
     function createPucci() {
       const pucci = new THREE.Group();
@@ -436,6 +688,40 @@
     pucciShadow.position.set(1.1, 0.01, 0.3);
     scene.add(pucciShadow);
 
+    // ── Quit animation state ──
+    let isQuitting = false;
+    let quitTimer = 0;
+    const QUIT_WAVE_DURATION = 1.8;
+    const QUIT_SURPRISE_DURATION = 0.6;
+    const QUIT_HOLE_DURATION = 1.2;
+    const QUIT_SINK_DURATION = 1.6;
+    const QUIT_PUCCI_HESITATE = 0.5;
+    const QUIT_CLOSE_DURATION = 0.4;
+
+    // Ground hole (black circle, hidden initially)
+    const holeGeo = new THREE.CircleGeometry(1.2, 32);
+    const holeMat = new THREE.MeshBasicMaterial({
+      color: 0x050510, transparent: true, opacity: 1, depthWrite: false,
+    });
+    const holePlane = new THREE.Mesh(holeGeo, holeMat);
+    holePlane.rotation.x = -Math.PI / 2;
+    holePlane.position.set(0.4, 0.005, 0.15);
+    holePlane.scale.set(0, 0, 0);
+    holePlane.visible = false;
+    scene.add(holePlane);
+
+    // Glowing rim ring around hole
+    const holeRimGeo = new THREE.RingGeometry(1.15, 1.35, 32);
+    const holeRimMat = new THREE.MeshBasicMaterial({
+      color: 0x6040B0, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide,
+    });
+    const holeRim = new THREE.Mesh(holeRimGeo, holeRimMat);
+    holeRim.rotation.x = -Math.PI / 2;
+    holeRim.position.set(0.4, 0.006, 0.15);
+    holeRim.scale.set(0, 0, 0);
+    holeRim.visible = false;
+    scene.add(holeRim);
+
     // ── Pet AI: random idle actions ──
     let animTime = 0;
     let currentAction = 'idle';
@@ -445,12 +731,12 @@
     let bounceVel = 0;
     let bounceY = 0;
 
-    const actions = ['idle', 'wave', 'jump', 'spin', 'look', 'dance', 'sit', 'sleep', 'run', 'stretch', 'sneeze', 'nod'];
+    const actions = ['idle', 'wave', 'jump', 'spin', 'look', 'dance', 'sit', 'sleep', 'run', 'stretch', 'sneeze', 'nod', 'eat'];
     // Weights: idle/sit/sleep last longer, active ones shorter
     const actionDurations = {
       idle: [3, 5], wave: [2, 3], jump: [1, 1], spin: [2, 3], look: [2, 4],
       dance: [3, 5], sit: [4, 7], sleep: [5, 8], run: [2, 4], stretch: [2, 3],
-      sneeze: [1.5, 2], nod: [2, 3],
+      sneeze: [1.5, 2], nod: [2, 3], eat: [3, 5], headpat: [2, 2],
     };
 
     function pickNextAction() {
@@ -462,7 +748,7 @@
     }
 
     // Double-click triggers a random action
-    document.addEventListener('dblclick', () => pickNextAction());
+    document.addEventListener('dblclick', () => { if (!isQuitting) pickNextAction(); });
 
     // Drag window on mousedown (canvas covers drag region, so use Tauri API directly)
     let isDragging = false;
@@ -474,12 +760,88 @@
     });
     document.addEventListener('mouseup', () => { isDragging = false; });
 
-    // Right-click to close
+    // Right-click context menu
+    const contextMenu = document.getElementById('context-menu');
     document.addEventListener('contextmenu', (e) => {
       e.preventDefault();
-      if (window.__TAURI__) {
-        window.__TAURI__.window.getCurrentWindow().close();
+      contextMenu.style.left = e.clientX + 'px';
+      contextMenu.style.top = e.clientY + 'px';
+      contextMenu.style.display = 'block';
+    });
+    document.getElementById('menu-test-notify').addEventListener('click', () => {
+      showNotification('這是一段測試文字 🐰🥕');
+      contextMenu.style.display = 'none';
+    });
+    document.getElementById('menu-quit').addEventListener('click', () => {
+      if (!isQuitting) {
+        isQuitting = true;
+        quitTimer = 0;
+        currentAction = 'wave';
+        actionTimer = 0;
+        contextMenu.style.display = 'none';
       }
+    });
+    window.addEventListener('click', () => {
+      contextMenu.style.display = 'none';
+    });
+
+    // ── Single click: headpat detection ──
+    let headpatActive = false;
+    document.addEventListener('click', (e) => {
+      if (headpatActive || isQuitting) return;
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObject(headMesh);
+      if (intersects.length > 0) {
+        headpatActive = true;
+        currentAction = 'headpat';
+        actionTimer = 0;
+        nextActionDelay = 2;
+        avatar.blushL.visible = true;
+        avatar.blushR.visible = true;
+        setTimeout(() => {
+          headpatActive = false;
+          avatar.blushL.visible = false;
+          avatar.blushR.visible = false;
+          pickNextAction();
+        }, 2000);
+      }
+    });
+
+    // ── Dark mode toggle (D key) ──
+    let isDarkMode = false;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'd' || e.key === 'D') {
+        isDarkMode = !isDarkMode;
+        const newTexture = isDarkMode ? createDarkSkinTexture() : createSkinTexture();
+        avatarMaterial.map = newTexture;
+        avatarMaterial.needsUpdate = true;
+      }
+    });
+
+    // ── Notification bubble ──
+    const bubbleEl = document.getElementById('notification-bubble');
+    let bubbleTimeout = null;
+
+    function showNotification(text) {
+      bubbleEl.textContent = text || '📩 新訊息！';
+      bubbleEl.style.display = 'block';
+      bubbleEl.style.opacity = '1';
+      // Trigger wave action
+      currentAction = 'wave';
+      actionTimer = 0;
+      nextActionDelay = 3;
+      if (bubbleTimeout) clearTimeout(bubbleTimeout);
+      bubbleTimeout = setTimeout(() => {
+        bubbleEl.style.opacity = '0';
+        setTimeout(() => { bubbleEl.style.display = 'none'; }, 500);
+      }, 3000);
+    }
+    window.showNotification = showNotification;
+
+    document.addEventListener('openclaw-message', (e) => {
+      showNotification(e.detail?.text);
     });
 
     // ── Animation Loop ──
@@ -492,7 +854,7 @@
       animTime += delta;
       actionTimer += delta;
 
-      if (actionTimer > nextActionDelay && currentAction !== 'jump' && currentAction !== 'sneeze') pickNextAction();
+      if (!isQuitting && actionTimer > nextActionDelay && currentAction !== 'jump' && currentAction !== 'sneeze') pickNextAction();
 
       // Bounce physics
       if (currentAction === 'jump' && actionTimer < 0.01) bounceVel = 5;
@@ -501,12 +863,14 @@
         bounceY += bounceVel * delta;
         if (bounceY <= 0) { bounceY = 0; bounceVel = 0; }
       }
-      avatar.position.y = 0.75 + bounceY;
+      if (!isQuitting) {
+        avatar.position.y = 0.75 + bounceY;
 
-      // Shadow
-      const ss = 1 - bounceY * 0.15;
-      shadowPlane.scale.set(ss, ss, 1);
-      shadowPlane.material.opacity = 0.15 * ss;
+        // Shadow
+        const ss = 1 - bounceY * 0.15;
+        shadowPlane.scale.set(ss, ss, 1);
+        shadowPlane.material.opacity = 0.15 * ss;
+      }
 
       const a = avatar;
       switch (currentAction) {
@@ -776,12 +1140,65 @@
           a.rotation.y = lp(a.rotation.y, 0, 2, delta);
           break;
         }
+
+        case 'eat': {
+          // Right arm raises carrot to mouth, head tilts down
+          a.rightArm.rotation.x = lp(a.rightArm.rotation.x, -1.8, 5, delta);
+          a.rightArm.rotation.z = lp(a.rightArm.rotation.z, -0.2, 5, delta);
+          a.leftArm.rotation.x = lp(a.leftArm.rotation.x, 0, 5, delta);
+          a.leftArm.rotation.z = lp(a.leftArm.rotation.z, 0, 5, delta);
+          a.head.rotation.x = lp(a.head.rotation.x, 0.15, 4, delta);
+          // Gentle chewing bob
+          a.head.position.y = 1.75 + Math.sin(animTime*8)*0.015;
+          a.head.rotation.z = lp(a.head.rotation.z, 0, 3, delta);
+          a.head.rotation.y = lp(a.head.rotation.y, -0.1, 3, delta);
+          a.rightLeg.rotation.x = lp(a.rightLeg.rotation.x, 0, 5, delta);
+          a.leftLeg.rotation.x = lp(a.leftLeg.rotation.x, 0, 5, delta);
+          a.rightEar.rotation.z = 0.12 + Math.sin(animTime*4)*0.06;
+          a.leftEar.rotation.z = -0.12 - Math.sin(animTime*4)*0.06;
+          a.twinTailL.rotation.x = 0.15+Math.sin(animTime*1.5)*0.04;
+          a.twinTailR.rotation.x = 0.15+Math.sin(animTime*1.5+0.5)*0.04;
+          a.rotation.y = lp(a.rotation.y, 0, 2, delta);
+          // Show eat carrot, hide left-hand carrot
+          a.eatCarrot.visible = true;
+          a.leftCarrot.visible = false;
+          break;
+        }
+
+        case 'headpat': {
+          // Ears shake rapidly, head tilts
+          const shake = Math.sin(animTime * 20) * 0.4;
+          a.rightEar.rotation.z = shake;
+          a.leftEar.rotation.z = -shake;
+          a.head.rotation.z = lp(a.head.rotation.z, 0.2, 6, delta);
+          a.head.rotation.x = lp(a.head.rotation.x, 0.05, 4, delta);
+          a.head.rotation.y = lp(a.head.rotation.y, 0, 3, delta);
+          a.head.position.y = 1.75 + Math.sin(animTime*3)*0.02;
+          a.rightArm.rotation.x = lp(a.rightArm.rotation.x, 0, 5, delta);
+          a.leftArm.rotation.x = lp(a.leftArm.rotation.x, 0, 5, delta);
+          a.rightArm.rotation.z = Math.sin(animTime*2)*0.05;
+          a.leftArm.rotation.z = -Math.sin(animTime*2)*0.05;
+          a.rightLeg.rotation.x = lp(a.rightLeg.rotation.x, 0, 5, delta);
+          a.leftLeg.rotation.x = lp(a.leftLeg.rotation.x, 0, 5, delta);
+          a.twinTailL.rotation.x = 0.15+Math.sin(animTime*4)*0.1;
+          a.twinTailR.rotation.x = 0.15+Math.sin(animTime*4+0.5)*0.1;
+          a.twinTailL.rotation.z = Math.sin(animTime*3)*0.08;
+          a.twinTailR.rotation.z = -Math.sin(animTime*3)*0.08;
+          a.rotation.y = lp(a.rotation.y, 0, 2, delta);
+          break;
+        }
+      }
+
+      // Carrot visibility: hide eat carrot when not eating, show left carrot when not eating
+      if (currentAction !== 'eat') {
+        a.eatCarrot.visible = false;
+        a.leftCarrot.visible = true;
       }
 
       // Reset body rotation
-      a.rotation.x = lp(a.rotation.x, 0, 3, delta);
+      if (!isQuitting) a.rotation.x = lp(a.rotation.x, 0, 3, delta);
       // Reset position for non-sit/sleep/run/stretch actions
-      if (!['sit','sleep','run','stretch','sneeze'].includes(currentAction)) {
+      if (!isQuitting && !['sit','sleep','run','stretch','sneeze','eat','headpat'].includes(currentAction)) {
         if (bounceY === 0) a.position.y = lp(a.position.y, 0.75, 3, delta);
       }
 
@@ -866,6 +1283,20 @@
           mouthScaleX = 1 + up * 0.3; mouthScaleY = 1 + up * 0.5;
           eyeScaleY = 1 - up * 0.5; // squint
           posY = up * 0.05;
+        } else if (currentAction === 'eat') {
+          // Watch bunny eat, slightly jealous
+          eyeOffsetX = -0.02;
+          eyeOffsetY = -0.01;
+          mouthScaleX = 0.8; mouthScaleY = 0.7;
+          bodyTilt = Math.sin(animTime * 1.5) * 0.03;
+          targetRotY = -0.45;
+        } else if (currentAction === 'headpat') {
+          // Happy watching headpat
+          posY = Math.abs(Math.sin(animTime * 6)) * 0.06;
+          bodyTilt = Math.sin(animTime * 4) * 0.08;
+          eyeScaleX = 1.2; eyeScaleY = 0.8; // happy squint
+          mouthScaleY = 1.15;
+          targetRotY = -0.4;
         } else if (currentAction === 'sit') {
           posY = -0.02;
           bodyTilt = Math.sin(animTime * 1.5) * 0.03;
@@ -883,30 +1314,238 @@
           legRY = 0.02 - Math.sin(r) * 0.04;
         }
 
-        // Apply
-        p.position.y = posY;
-        p.bodyMesh.rotation.z = bodyTilt;
-        p.bodyMesh.rotation.x = bodyNod;
-        p.leftEye.position.set(baseEyeLX + eyeOffsetX, baseEyeY + eyeOffsetY, 0.39);
-        p.rightEye.position.set(baseEyeRX + eyeOffsetX, baseEyeY + eyeOffsetY, 0.39);
-        p.leftEye.scale.set(eyeScaleX, eyeScaleY, 1);
-        p.rightEye.scale.set(eyeScaleX, eyeScaleY, 1);
-        p.mouthOuter.scale.set(mouthScaleX, mouthScaleY, 1);
-        p.mouthInner.scale.set(mouthScaleX, mouthScaleY, 1);
-        p.leftArm.position.y = armLY;
-        p.rightArm.position.y = armRY;
-        p.leftLeg.position.y = legLY;
-        p.rightLeg.position.y = legRY;
-
-        // Smooth rotation
-        p.rotation.y += (targetRotY - p.rotation.y) * 2.5 * delta;
+        // Apply (skip during quit sink phases — quit handles Pucci directly)
+        const quitPhase2Start = QUIT_WAVE_DURATION;
+        if (!isQuitting || quitTimer < quitPhase2Start) {
+          p.position.y = posY;
+          p.bodyMesh.rotation.z = bodyTilt;
+          p.bodyMesh.rotation.x = bodyNod;
+          p.leftEye.position.set(baseEyeLX + eyeOffsetX, baseEyeY + eyeOffsetY, 0.39);
+          p.rightEye.position.set(baseEyeRX + eyeOffsetX, baseEyeY + eyeOffsetY, 0.39);
+          p.leftEye.scale.set(eyeScaleX, eyeScaleY, 1);
+          p.rightEye.scale.set(eyeScaleX, eyeScaleY, 1);
+          p.mouthOuter.scale.set(mouthScaleX, mouthScaleY, 1);
+          p.mouthInner.scale.set(mouthScaleX, mouthScaleY, 1);
+          p.leftArm.position.y = armLY;
+          p.rightArm.position.y = armRY;
+          p.leftLeg.position.y = legLY;
+          p.rightLeg.position.y = legRY;
+          p.rotation.y += (targetRotY - p.rotation.y) * 2.5 * delta;
+        } else if (isQuitting) {
+          // During quit: wide-eyed scared expression
+          p.leftEye.scale.set(1.4, 1.4, 1);
+          p.rightEye.scale.set(1.4, 1.4, 1);
+          p.mouthOuter.scale.set(1.2, 1.5, 1);
+          p.mouthInner.scale.set(1.2, 1.5, 1);
+        }
 
         // Update pucci shadow
-        pucciShadow.position.x = p.position.x;
-        pucciShadow.position.z = p.position.z;
-        const ps = 1 - Math.max(0, p.position.y) * 0.3;
-        pucciShadow.scale.set(ps, ps, 1);
-        pucciShadow.material.opacity = 0.12 * ps;
+        if (!isQuitting) {
+          pucciShadow.position.x = p.position.x;
+          pucciShadow.position.z = p.position.z;
+          const ps = 1 - Math.max(0, p.position.y) * 0.3;
+          pucciShadow.scale.set(ps, ps, 1);
+          pucciShadow.material.opacity = 0.12 * ps;
+        }
+      }
+
+      // ── Quit animation sequence ──
+      if (isQuitting) {
+        quitTimer += delta;
+
+        const p1End = QUIT_WAVE_DURATION;
+        const p2End = p1End + QUIT_SURPRISE_DURATION;
+        const p3End = p2End + QUIT_HOLE_DURATION;
+        const p4End = p3End + QUIT_SINK_DURATION;
+        const p5End = p4End + QUIT_CLOSE_DURATION;
+
+        if (quitTimer < p1End) {
+          // ── Phase 1: Energetic wave goodbye with little hops ──
+          currentAction = 'wave';
+          // Add small hops while waving
+          const hopCycle = Math.sin(quitTimer * 8);
+          a.position.y = 0.75 + Math.abs(hopCycle) * 0.12;
+          // Body sways side to side
+          a.rotation.y = Math.sin(quitTimer * 3) * 0.25;
+          // Head tilts playfully
+          a.head.rotation.z = Math.sin(quitTimer * 4) * 0.15;
+          // Ears flap excitedly
+          a.rightEar.rotation.z = 0.12 + Math.sin(quitTimer * 10) * 0.25;
+          a.leftEar.rotation.z = -0.12 - Math.sin(quitTimer * 10) * 0.25;
+          // Twin tails bounce
+          a.twinTailL.rotation.x = 0.15 + Math.sin(quitTimer * 8) * 0.3;
+          a.twinTailR.rotation.x = 0.15 - Math.sin(quitTimer * 8) * 0.3;
+          a.twinTailL.rotation.z = Math.sin(quitTimer * 6) * 0.15;
+          a.twinTailR.rotation.z = -Math.sin(quitTimer * 6) * 0.15;
+          // Pucci bounces happily watching
+          pucci.position.y = Math.abs(Math.sin(quitTimer * 6)) * 0.1;
+          pucci.rotation.y = lp(pucci.rotation.y, -0.5, 4, delta);
+          pucci.bodyMesh.rotation.z = Math.sin(quitTimer * 5) * 0.1;
+
+        } else if (quitTimer < p2End) {
+          // ── Phase 2: Surprise! Look down as hole starts to appear ──
+          const sp = (quitTimer - p1End) / QUIT_SURPRISE_DURATION;
+          currentAction = 'idle'; // stop wave
+          // Face forward, look down
+          a.rotation.y = lp(a.rotation.y, 0, 8, delta);
+          a.head.rotation.x = lp(a.head.rotation.x, 0.4, 10, delta); // look down
+          a.head.rotation.z = lp(a.head.rotation.z, -0.15, 8, delta); // slight tilt
+          a.head.rotation.y = lp(a.head.rotation.y, 0, 8, delta);
+          a.position.y = lp(a.position.y, 0.75, 10, delta);
+          // Ears perk up (surprise)
+          a.rightEar.rotation.z = lp(a.rightEar.rotation.z, -0.15, 12, delta);
+          a.leftEar.rotation.z = lp(a.leftEar.rotation.z, 0.15, 12, delta);
+          // Arms slightly out in surprise
+          a.rightArm.rotation.x = lp(a.rightArm.rotation.x, -0.4, 8, delta);
+          a.leftArm.rotation.x = lp(a.leftArm.rotation.x, -0.4, 8, delta);
+          a.rightArm.rotation.z = lp(a.rightArm.rotation.z, -0.5, 8, delta);
+          a.leftArm.rotation.z = lp(a.leftArm.rotation.z, 0.5, 8, delta);
+          // Small hole starts appearing
+          holePlane.visible = true;
+          holeRim.visible = true;
+          const tinyScale = sp * 0.15;
+          holePlane.scale.set(tinyScale, tinyScale, 1);
+          holeRim.scale.set(tinyScale, tinyScale, 1);
+          holeRimMat.opacity = sp * 0.4;
+          // Pucci startled — jumps back
+          pucci.position.y = Math.max(0, 0.2 * (1 - sp * 2));
+          pucci.bodyMesh.rotation.z = lp(pucci.bodyMesh.rotation.z, -0.15, 6, delta);
+          pucci.rotation.y = lp(pucci.rotation.y, -0.3, 4, delta);
+
+        } else if (quitTimer < p3End) {
+          // ── Phase 3: Hole expands with glowing rim pulse ──
+          const hp = (quitTimer - p2End) / QUIT_HOLE_DURATION;
+          const easeOut = 1 - Math.pow(1 - hp, 3); // ease-out cubic
+          currentAction = 'idle';
+
+          holePlane.visible = true;
+          holeRim.visible = true;
+          const holeScale = 0.15 + easeOut * 1.35; // 0.15 → 1.5
+          holePlane.scale.set(holeScale, holeScale, 1);
+          holeRim.scale.set(holeScale, holeScale, 1);
+
+          // Pulsing glow rim
+          holeRimMat.opacity = 0.3 + Math.sin(quitTimer * 12) * 0.15;
+
+          // Fade out shadows
+          shadowPlane.material.opacity = 0.15 * (1 - easeOut);
+          pucciShadow.material.opacity = 0.12 * (1 - easeOut);
+          if (hp > 0.7) {
+            shadowPlane.visible = false;
+            pucciShadow.visible = false;
+          }
+
+          // Avatar watches the hole grow — nervous fidgeting
+          a.position.y = 0.75;
+          a.head.rotation.x = lp(a.head.rotation.x, 0.35, 4, delta);
+          a.head.rotation.z = Math.sin(quitTimer * 6) * 0.08;
+          a.head.rotation.y = lp(a.head.rotation.y, 0, 4, delta);
+          a.rotation.y = lp(a.rotation.y, 0, 4, delta);
+          // Arms fidget
+          a.rightArm.rotation.x = -0.3 + Math.sin(quitTimer * 5) * 0.15;
+          a.leftArm.rotation.x = -0.3 + Math.sin(quitTimer * 5 + 1) * 0.15;
+          a.rightArm.rotation.z = -0.3 + Math.sin(quitTimer * 3) * 0.1;
+          a.leftArm.rotation.z = 0.3 - Math.sin(quitTimer * 3) * 0.1;
+          // Nervous ear twitching
+          a.rightEar.rotation.z = -0.1 + Math.sin(quitTimer * 15) * 0.12;
+          a.leftEar.rotation.z = 0.1 - Math.sin(quitTimer * 15) * 0.12;
+          // Legs shuffle
+          a.rightLeg.rotation.x = Math.sin(quitTimer * 4) * 0.15;
+          a.leftLeg.rotation.x = -Math.sin(quitTimer * 4) * 0.15;
+
+          // Pucci backs up nervously, shaking
+          pucci.position.y = 0;
+          pucci.position.x = lp(pucci.position.x, 1.4, 2, delta); // scoot away
+          pucci.bodyMesh.rotation.z = Math.sin(quitTimer * 12) * 0.08; // shaking
+          pucci.rotation.y = lp(pucci.rotation.y, -0.6, 3, delta); // look at hole
+
+        } else if (quitTimer < p4End) {
+          // ── Phase 4: Sink into the hole! ──
+          const sinkT = quitTimer - p3End;
+          const sinkP = sinkT / QUIT_SINK_DURATION;
+          const eased = sinkP < 0.3 ? sinkP * sinkP * 11.1 : sinkP; // fast start then linear
+
+          // Keep hole fully open + rim pulsing faster
+          holePlane.scale.set(1.5, 1.5, 1);
+          holeRim.scale.set(1.5, 1.5, 1);
+          holeRimMat.opacity = 0.4 + Math.sin(quitTimer * 18) * 0.2;
+
+          // Avatar sinks: y from 0.75 → -2.5
+          a.position.y = 0.75 - eased * 3.25;
+          // Slow spin while sinking
+          a.rotation.y += delta * 4;
+          // Scale shrinks
+          const avatarScale = 1 - eased * 0.4;
+          a.scale.set(avatarScale, avatarScale, avatarScale);
+
+          // Flailing arms! Frantic waving
+          a.rightArm.rotation.x = -2.0 + Math.sin(quitTimer * 14) * 0.8;
+          a.leftArm.rotation.x = -2.0 + Math.sin(quitTimer * 14 + 2) * 0.8;
+          a.rightArm.rotation.z = -0.6 + Math.sin(quitTimer * 10) * 0.5;
+          a.leftArm.rotation.z = 0.6 - Math.sin(quitTimer * 10) * 0.5;
+          // Kicking legs
+          a.rightLeg.rotation.x = Math.sin(quitTimer * 12) * 0.8;
+          a.leftLeg.rotation.x = Math.sin(quitTimer * 12 + 1.5) * 0.8;
+          // Head panic
+          a.head.rotation.x = -0.2 + Math.sin(quitTimer * 8) * 0.2;
+          a.head.rotation.z = Math.sin(quitTimer * 10) * 0.2;
+          a.head.rotation.y = Math.sin(quitTimer * 6) * 0.3;
+          a.head.position.y = 1.75;
+          // Ears flapping wildly
+          a.rightEar.rotation.z = Math.sin(quitTimer * 18) * 0.5;
+          a.leftEar.rotation.z = -Math.sin(quitTimer * 18) * 0.5;
+          // Twin tails whip around
+          a.twinTailL.rotation.x = 0.15 + Math.sin(quitTimer * 12) * 0.5;
+          a.twinTailR.rotation.x = 0.15 - Math.sin(quitTimer * 12) * 0.5;
+          a.twinTailL.rotation.z = Math.sin(quitTimer * 10) * 0.4;
+          a.twinTailR.rotation.z = -Math.sin(quitTimer * 10) * 0.4;
+
+          // Pucci: hesitate, then jump in after avatar
+          const pucciSinkStart = QUIT_PUCCI_HESITATE;
+          if (sinkT < pucciSinkStart) {
+            // Pucci panics on the edge — bouncing and looking down
+            pucci.position.y = Math.abs(Math.sin(quitTimer * 16)) * 0.15;
+            pucci.position.x = lp(pucci.position.x, 0.6, 4, delta); // move closer to hole
+            pucci.bodyMesh.rotation.z = Math.sin(quitTimer * 14) * 0.15;
+            pucci.rotation.y = lp(pucci.rotation.y, 0, 6, delta); // look at hole
+            pucci.rotation.x = lp(pucci.rotation.x, 0.25, 6, delta); // lean forward/look down
+          } else {
+            // Pucci takes the plunge!
+            const pucciP = (sinkT - pucciSinkStart) / (QUIT_SINK_DURATION - pucciSinkStart);
+            const pucciEased = pucciP * pucciP * pucciP; // cubic ease-in (accelerating fall)
+            pucci.position.y = -pucciEased * 3.5;
+            pucci.position.x = lp(pucci.position.x, 0.4, 6, delta); // move toward center
+            const pucciScale = 0.55 * (1 - pucciEased * 0.5);
+            pucci.scale.set(pucciScale, pucciScale, pucciScale);
+            // Pucci spins while falling
+            pucci.rotation.y += delta * 6;
+            pucci.rotation.x = lp(pucci.rotation.x, 0.4, 4, delta);
+            // Arms/legs flail
+            pucci.leftArm.position.y = 0.45 + Math.sin(quitTimer * 16) * 0.1;
+            pucci.rightArm.position.y = 0.45 + Math.sin(quitTimer * 16 + 2) * 0.1;
+            pucci.leftLeg.position.y = 0.02 + Math.sin(quitTimer * 14) * 0.06;
+            pucci.rightLeg.position.y = 0.02 + Math.sin(quitTimer * 14 + 1.5) * 0.06;
+          }
+
+        } else if (quitTimer < p5End) {
+          // ── Phase 5: Hole closes with bounce ──
+          a.position.y = -4;
+          pucci.position.y = -4;
+          const closeP = (quitTimer - p4End) / QUIT_CLOSE_DURATION;
+          // Elastic close: overshoot then settle
+          const elastic = 1 - Math.pow(1 - closeP, 2);
+          const closeScale = 1.5 * (1 - elastic);
+          holePlane.scale.set(closeScale, closeScale, 1);
+          holeRim.scale.set(closeScale * 1.1, closeScale * 1.1, 1);
+          holeRimMat.opacity = 0.5 * (1 - elastic);
+        } else {
+          // ── Done: close window ──
+          holePlane.visible = false;
+          holeRim.visible = false;
+          if (window.__TAURI__) {
+            window.__TAURI__.window.getCurrentWindow().close();
+          }
+        }
       }
 
       renderer.render(scene, camera);
