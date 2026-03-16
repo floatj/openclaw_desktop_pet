@@ -18,8 +18,8 @@
     const scene = new THREE.Scene();
 
     const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 2.8, 6);
-    camera.lookAt(0, 1.5, 0);
+    camera.position.set(0.4, 2.8, 6.5);
+    camera.lookAt(0.4, 1.3, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -350,6 +350,91 @@
 
     const avatar = createMinecraftAvatar();
     scene.add(avatar);
+
+    // ── Pucci (NZXT Mascot Pet) ──
+    function createPucci() {
+      const pucci = new THREE.Group();
+
+      const purpleMain = new THREE.MeshStandardMaterial({ color: 0x6B3FA0, roughness: 0.7 });
+      const purpleDark = new THREE.MeshStandardMaterial({ color: 0x4A2D6E, roughness: 0.7 });
+      const white = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.5 });
+      const eyeMat = new THREE.MeshStandardMaterial({ color: 0x3A1F5E, roughness: 0.4 });
+
+      // Body
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.85, 0.75), purpleMain);
+      body.castShadow = true; body.position.y = 0.55;
+      pucci.add(body);
+
+      // Top rounded edge
+      const topRound = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.1, 0.65), purpleMain);
+      topRound.position.y = 1.025; topRound.castShadow = true;
+      pucci.add(topRound);
+
+      // Bottom
+      const bottomRound = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.08, 0.7), purpleDark);
+      bottomRound.position.y = 0.1;
+      pucci.add(bottomRound);
+
+      // Eyes (dark dots)
+      const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 0.05), eyeMat);
+      leftEye.position.set(-0.16, 0.7, 0.39);
+      pucci.add(leftEye);
+      const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 0.05), eyeMat);
+      rightEye.position.set(0.16, 0.7, 0.39);
+      pucci.add(rightEye);
+
+      // Mouth (dark opening)
+      const mouthOuter = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.35, 0.06), purpleDark);
+      mouthOuter.position.set(0, 0.38, 0.38);
+      pucci.add(mouthOuter);
+      // Mouth inner (white)
+      const mouthInner = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.06), white);
+      mouthInner.position.set(0, 0.42, 0.41);
+      pucci.add(mouthInner);
+
+      // Legs
+      const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.18, 0.22), purpleDark);
+      leftLeg.position.set(-0.22, 0.02, 0.05); leftLeg.castShadow = true;
+      pucci.add(leftLeg);
+      const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.18, 0.22), purpleDark);
+      rightLeg.position.set(0.22, 0.02, 0.05); rightLeg.castShadow = true;
+      pucci.add(rightLeg);
+
+      // Arms (side nubs)
+      const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.22, 0.18), purpleDark);
+      leftArm.position.set(-0.52, 0.45, 0); leftArm.castShadow = true;
+      pucci.add(leftArm);
+      const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.22, 0.18), purpleDark);
+      rightArm.position.set(0.52, 0.45, 0); rightArm.castShadow = true;
+      pucci.add(rightArm);
+
+      pucci.scale.set(0.55, 0.55, 0.55);
+
+      pucci.bodyMesh = body;
+      pucci.leftLeg = leftLeg;
+      pucci.rightLeg = rightLeg;
+      pucci.leftArm = leftArm;
+      pucci.rightArm = rightArm;
+      pucci.leftEye = leftEye;
+      pucci.rightEye = rightEye;
+      pucci.mouthOuter = mouthOuter;
+      pucci.mouthInner = mouthInner;
+
+      return pucci;
+    }
+
+    const pucci = createPucci();
+    pucci.position.set(1.1, 0, 0.3);
+    scene.add(pucci);
+
+    // Pucci shadow
+    const pucciShadow = new THREE.Mesh(
+      new THREE.CircleGeometry(0.35, 12),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.12, depthWrite: false })
+    );
+    pucciShadow.rotation.x = -Math.PI / 2;
+    pucciShadow.position.set(1.1, 0.01, 0.3);
+    scene.add(pucciShadow);
 
     // ── Pet AI: random idle actions ──
     let animTime = 0;
@@ -698,6 +783,130 @@
       // Reset position for non-sit/sleep/run/stretch actions
       if (!['sit','sleep','run','stretch','sneeze'].includes(currentAction)) {
         if (bounceY === 0) a.position.y = lp(a.position.y, 0.75, 3, delta);
+      }
+
+      // ── Pucci expressive animation ──
+      {
+        const p = pucci;
+        const baseEyeY = 0.7, baseEyeLX = -0.16, baseEyeRX = 0.16;
+
+        // Defaults
+        let eyeScaleX = 1, eyeScaleY = 1;
+        let eyeOffsetX = 0, eyeOffsetY = 0;
+        let mouthScaleX = 1, mouthScaleY = 1;
+        let bodyTilt = Math.sin(animTime * 1.8) * 0.04;
+        let bodyNod = 0;
+        let posY = Math.sin(animTime * 2.5) * 0.04;
+        let armLY = 0.45 + Math.sin(animTime * 2) * 0.03;
+        let armRY = 0.45 + Math.sin(animTime * 2 + 1) * 0.03;
+        let legLY = 0.02 + Math.sin(animTime * 3) * 0.015;
+        let legRY = 0.02 + Math.sin(animTime * 3 + Math.PI) * 0.015;
+
+        // Blink: flatten eyes periodically
+        const blinkCycle = animTime % (3.5 + Math.sin(animTime * 0.7) * 1.2);
+        if (blinkCycle < 0.1) { eyeScaleY = 0.2; }
+
+        // Look toward bunny sometimes
+        const lookCycle = Math.sin(animTime * 0.5);
+        let targetRotY = lookCycle > 0.3 ? -0.4 : (lookCycle < -0.3 ? 0.2 : 0);
+
+        // React to bunny's actions
+        if (currentAction === 'jump') {
+          posY = Math.abs(Math.sin(animTime * 8)) * 0.18;
+          bodyTilt = Math.sin(animTime * 8) * 0.12;
+          eyeScaleX = 1.3; eyeScaleY = 1.3; // wide eyes
+          mouthScaleX = 1.1; mouthScaleY = 1.2;
+          armLY = 0.45 + Math.sin(animTime * 10) * 0.08;
+          armRY = 0.45 + Math.sin(animTime * 10 + 2) * 0.08;
+          targetRotY = -0.3;
+        } else if (currentAction === 'dance') {
+          posY = Math.abs(Math.sin(animTime * 6)) * 0.1;
+          bodyTilt = Math.sin(animTime * 6) * 0.15;
+          eyeOffsetX = Math.sin(animTime * 6) * 0.02;
+          mouthScaleY = 1.15;
+          armLY = 0.45 + Math.sin(animTime * 6) * 0.06;
+          armRY = 0.45 - Math.sin(animTime * 6) * 0.06;
+          legLY = 0.02 + Math.sin(animTime * 6) * 0.04;
+          legRY = 0.02 - Math.sin(animTime * 6) * 0.04;
+          targetRotY = Math.sin(animTime * 3) * 0.5;
+        } else if (currentAction === 'sleep') {
+          posY = -0.03;
+          bodyTilt = 0.12 + Math.sin(animTime * 1.2) * 0.025;
+          eyeScaleY = 0.15; // eyes nearly shut
+          eyeOffsetY = -0.02;
+          mouthScaleX = 0.7; mouthScaleY = 0.5;
+          armLY = 0.45 + Math.sin(animTime * 1.2) * 0.01;
+          armRY = armLY;
+          targetRotY = -0.25;
+        } else if (currentAction === 'wave') {
+          posY = Math.abs(Math.sin(animTime * 5)) * 0.08;
+          eyeOffsetX = -0.015;
+          mouthScaleY = 1.2;
+          armRY = 0.45 + Math.sin(animTime * 8) * 0.07;
+          targetRotY = -0.5;
+        } else if (currentAction === 'spin') {
+          eyeOffsetX = Math.sin(animTime * 8) * 0.025;
+          eyeOffsetY = Math.cos(animTime * 8) * 0.025;
+          bodyTilt = Math.sin(animTime * 4) * 0.08;
+          mouthScaleY = 1.1;
+        } else if (currentAction === 'sneeze') {
+          if (actionTimer > 0.8 && actionTimer < 1.2) {
+            posY = 0.12;
+            bodyTilt = -0.15;
+            eyeScaleX = 1.4; eyeScaleY = 1.4;
+            mouthScaleX = 1.2; mouthScaleY = 1.4;
+          }
+        } else if (currentAction === 'nod') {
+          bodyNod = Math.sin(animTime * 6) * 0.08;
+          eyeOffsetY = Math.sin(animTime * 6) * 0.015;
+          mouthScaleY = 1.08;
+        } else if (currentAction === 'stretch') {
+          const phase = Math.min(actionTimer / 2, 1);
+          const up = phase < 0.5 ? phase * 2 : 2 - phase * 2;
+          mouthScaleX = 1 + up * 0.3; mouthScaleY = 1 + up * 0.5;
+          eyeScaleY = 1 - up * 0.5; // squint
+          posY = up * 0.05;
+        } else if (currentAction === 'sit') {
+          posY = -0.02;
+          bodyTilt = Math.sin(animTime * 1.5) * 0.03;
+          eyeOffsetX = Math.sin(animTime * 0.7) * 0.015;
+          mouthScaleX = 0.9; mouthScaleY = 0.85;
+          targetRotY = -0.3;
+        } else if (currentAction === 'run') {
+          const r = animTime * 10;
+          posY = Math.abs(Math.sin(r)) * 0.1;
+          bodyTilt = Math.sin(r * 0.5) * 0.1;
+          eyeOffsetY = 0.01;
+          armLY = 0.45 + Math.sin(r) * 0.06;
+          armRY = 0.45 - Math.sin(r) * 0.06;
+          legLY = 0.02 + Math.sin(r) * 0.04;
+          legRY = 0.02 - Math.sin(r) * 0.04;
+        }
+
+        // Apply
+        p.position.y = posY;
+        p.bodyMesh.rotation.z = bodyTilt;
+        p.bodyMesh.rotation.x = bodyNod;
+        p.leftEye.position.set(baseEyeLX + eyeOffsetX, baseEyeY + eyeOffsetY, 0.39);
+        p.rightEye.position.set(baseEyeRX + eyeOffsetX, baseEyeY + eyeOffsetY, 0.39);
+        p.leftEye.scale.set(eyeScaleX, eyeScaleY, 1);
+        p.rightEye.scale.set(eyeScaleX, eyeScaleY, 1);
+        p.mouthOuter.scale.set(mouthScaleX, mouthScaleY, 1);
+        p.mouthInner.scale.set(mouthScaleX, mouthScaleY, 1);
+        p.leftArm.position.y = armLY;
+        p.rightArm.position.y = armRY;
+        p.leftLeg.position.y = legLY;
+        p.rightLeg.position.y = legRY;
+
+        // Smooth rotation
+        p.rotation.y += (targetRotY - p.rotation.y) * 2.5 * delta;
+
+        // Update pucci shadow
+        pucciShadow.position.x = p.position.x;
+        pucciShadow.position.z = p.position.z;
+        const ps = 1 - Math.max(0, p.position.y) * 0.3;
+        pucciShadow.scale.set(ps, ps, 1);
+        pucciShadow.material.opacity = 0.12 * ps;
       }
 
       renderer.render(scene, camera);

@@ -1,6 +1,17 @@
-# Tauri + Vanilla
+# Minecraft Desktop Pet
 
-This template should help get you started developing with Tauri in vanilla HTML, CSS and Javascript.
+## Web Version
+web/index.html
+
+
+## Desktop Application (Tauri)
+
+### Frontend
+src/index.html
+
+###  Tauri Backend
+src-tauri/
+
 
 ## Recommended IDE Setup
 

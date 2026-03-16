@@ -264,80 +264,71 @@ SPD: 5 / 9</div>
       ctx.fillRect(16, 0, 8, 8);
 
       // ══ BODY - FRONT (8x12 at 20,20) ══
-      // Blue maid dress top
-      ctx.fillStyle = '#3B5998';
-      ctx.fillRect(20, 20, 8, 4);
-      ctx.fillStyle = '#2D4373';
-      ctx.fillRect(20, 20, 8, 1); // collar shadow
-      // White collar detail
+      // Blue maid dress - fill entire body blue first
+      ctx.fillStyle = '#2B4A8C';
+      ctx.fillRect(20, 20, 8, 12);
+      // White collar
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(22, 20, 4, 1);
-      // Blue bow
+      ctx.fillRect(21, 20, 6, 1);
+      // Blue bow at neck
       ctx.fillStyle = '#4A90D9';
       ctx.fillRect(23, 21, 2, 1);
-      ctx.fillStyle = '#6AB0E8';
-      ctx.fillRect(22, 22, 1, 1);
-      ctx.fillRect(25, 22, 1, 1);
+      ctx.fillStyle = '#3A7BC8';
+      ctx.fillRect(22, 22, 1, 1); ctx.fillRect(25, 22, 1, 1);
       ctx.fillStyle = '#4A90D9';
       ctx.fillRect(23, 22, 2, 1);
-      // White apron
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(22, 23, 4, 1);
-      // Skirt (blue maid dress with pleats)
-      ctx.fillStyle = '#2D4373';
-      ctx.fillRect(20, 24, 8, 1); // waistband
-      ctx.fillStyle = '#3B5998';
+      // Waistband
+      ctx.fillStyle = '#1E3566';
+      ctx.fillRect(20, 24, 8, 1);
+      // Skirt area - strong blue
+      ctx.fillStyle = '#2B4A8C';
       ctx.fillRect(20, 25, 8, 7);
-      // White apron over skirt
+      // Pleat highlights
+      ctx.fillStyle = '#3B5FA0';
+      ctx.fillRect(21, 26, 1, 5); ctx.fillRect(24, 26, 1, 5);
+      // Pleat shadows
+      ctx.fillStyle = '#1E3566';
+      ctx.fillRect(20, 25, 1, 7); ctx.fillRect(23, 26, 1, 6); ctx.fillRect(27, 25, 1, 7);
+      // White apron (narrower - 2px center)
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(22, 25, 4, 6);
-      ctx.fillStyle = '#F0F0F0';
-      ctx.fillRect(22, 25, 1, 6);
-      ctx.fillRect(25, 25, 1, 6);
-      // Pleat lines on blue sides
-      ctx.fillStyle = '#2D4373';
-      ctx.fillRect(20, 25, 1, 7);
-      ctx.fillRect(27, 25, 1, 7);
-      // White trim
+      ctx.fillRect(23, 23, 2, 8);
+      ctx.fillStyle = '#F0F0F8';
+      ctx.fillRect(23, 23, 2, 1); // apron top edge
+      // White trim at bottom
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(20, 31, 8, 1);
 
       // ══ BODY - RIGHT (4x12 at 16,20) ══
-      ctx.fillStyle = '#3B5998';
-      ctx.fillRect(16, 20, 4, 4);
-      ctx.fillStyle = '#2D4373';
-      ctx.fillRect(16, 24, 4, 1);
-      ctx.fillStyle = '#3B5998';
-      ctx.fillRect(16, 25, 4, 7);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(16, 31, 4, 1);
+      ctx.fillStyle = '#2B4A8C';
+      ctx.fillRect(16, 20, 4, 12);
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(16, 20, 4, 1);
+      ctx.fillStyle = '#1E3566'; ctx.fillRect(16, 24, 4, 1);
+      ctx.fillStyle = '#1E3566'; ctx.fillRect(16, 25, 1, 7);
+      ctx.fillStyle = '#3B5FA0'; ctx.fillRect(18, 26, 1, 5);
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(16, 31, 4, 1);
 
       // ══ BODY - LEFT (4x12 at 28,20) ══
-      ctx.fillStyle = '#3B5998';
-      ctx.fillRect(28, 20, 4, 4);
-      ctx.fillStyle = '#2D4373';
-      ctx.fillRect(28, 24, 4, 1);
-      ctx.fillStyle = '#3B5998';
-      ctx.fillRect(28, 25, 4, 7);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(28, 31, 4, 1);
+      ctx.fillStyle = '#2B4A8C';
+      ctx.fillRect(28, 20, 4, 12);
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(28, 20, 4, 1);
+      ctx.fillStyle = '#1E3566'; ctx.fillRect(28, 24, 4, 1);
+      ctx.fillStyle = '#1E3566'; ctx.fillRect(31, 25, 1, 7);
+      ctx.fillStyle = '#3B5FA0'; ctx.fillRect(29, 26, 1, 5);
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(28, 31, 4, 1);
 
       // ══ BODY - BACK (8x12 at 32,20) ══
-      ctx.fillStyle = '#3B5998';
-      ctx.fillRect(32, 20, 8, 4);
-      // Back apron bow (white)
+      ctx.fillStyle = '#2B4A8C';
+      ctx.fillRect(32, 20, 8, 12);
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(32, 20, 8, 1);
+      // Back apron bow
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(34, 21, 4, 2);
-      ctx.fillStyle = '#F0F0F0';
-      ctx.fillRect(35, 21, 2, 2);
-      ctx.fillStyle = '#2D4373';
-      ctx.fillRect(32, 24, 8, 1);
-      ctx.fillStyle = '#3B5998';
-      ctx.fillRect(32, 25, 8, 7);
-      ctx.fillStyle = '#2D4373';
-      ctx.fillRect(32, 25, 1, 7);
-      ctx.fillRect(35, 26, 1, 6);
-      ctx.fillRect(39, 25, 1, 7);
+      ctx.fillRect(34, 22, 4, 2);
+      ctx.fillStyle = '#F0F0F0'; ctx.fillRect(35, 22, 2, 2);
+      ctx.fillStyle = '#1E3566'; ctx.fillRect(32, 24, 8, 1);
+      // Pleat details
+      ctx.fillStyle = '#1E3566';
+      ctx.fillRect(32, 25, 1, 7); ctx.fillRect(35, 26, 1, 6); ctx.fillRect(39, 25, 1, 7);
+      ctx.fillStyle = '#3B5FA0'; ctx.fillRect(33, 26, 1, 5); ctx.fillRect(37, 26, 1, 5);
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(32, 31, 8, 1);
 
@@ -611,6 +602,94 @@ SPD: 5 / 9</div>
 
     const avatar = createMinecraftAvatar();
     scene.add(avatar);
+
+    // ── Pucci (NZXT Mascot Pet) ──
+    function createPucci() {
+      const pucci = new THREE.Group();
+
+      // Colors
+      const purpleMain = new THREE.MeshStandardMaterial({ color: 0x6B3FA0, roughness: 0.7 });
+      const purpleDark = new THREE.MeshStandardMaterial({ color: 0x4A2D6E, roughness: 0.7 });
+      const purpleLight = new THREE.MeshStandardMaterial({ color: 0x8B5FBF, roughness: 0.6 });
+      const white = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.5 });
+      const eyeMat = new THREE.MeshStandardMaterial({ color: 0x3A1F5E, roughness: 0.4 });
+
+      // Body (main cube, slightly rounded look via multiple boxes)
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.85, 0.75), purpleMain);
+      body.castShadow = true;
+      body.position.y = 0.55;
+      pucci.add(body);
+
+      // Top rounded edge
+      const topRound = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.1, 0.65), purpleMain);
+      topRound.position.y = 1.025;
+      topRound.castShadow = true;
+      pucci.add(topRound);
+
+      // Bottom body slight extension
+      const bottomRound = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.08, 0.7), purpleDark);
+      bottomRound.position.y = 0.1;
+      pucci.add(bottomRound);
+
+      // Eyes (dark dots)
+      const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 0.05), eyeMat);
+      leftEye.position.set(-0.16, 0.7, 0.39); pucci.add(leftEye);
+      const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 0.05), eyeMat);
+      rightEye.position.set(0.16, 0.7, 0.39); pucci.add(rightEye);
+
+      // Mouth opening
+      const mouthOuter = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.35, 0.06), purpleDark);
+      mouthOuter.position.set(0, 0.38, 0.38); pucci.add(mouthOuter);
+      const mouthInner = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.06), white);
+      mouthInner.position.set(0, 0.42, 0.41); pucci.add(mouthInner);
+
+      // Legs (two small stubby purple legs)
+      const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.18, 0.22), purpleDark);
+      leftLeg.position.set(-0.22, 0.02, 0.05);
+      leftLeg.castShadow = true;
+      pucci.add(leftLeg);
+
+      const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.18, 0.22), purpleDark);
+      rightLeg.position.set(0.22, 0.02, 0.05);
+      rightLeg.castShadow = true;
+      pucci.add(rightLeg);
+
+      // Arms (small side nubs)
+      const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.22, 0.18), purpleDark);
+      leftArm.position.set(-0.52, 0.45, 0);
+      leftArm.castShadow = true;
+      pucci.add(leftArm);
+
+      const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.22, 0.18), purpleDark);
+      rightArm.position.set(0.52, 0.45, 0);
+      rightArm.castShadow = true;
+      pucci.add(rightArm);
+
+      // Scale down to pet size
+      pucci.scale.set(0.7, 0.7, 0.7);
+
+      // Store refs for animation
+      pucci.bodyMesh = body;
+      pucci.leftLeg = leftLeg;
+      pucci.rightLeg = rightLeg;
+      pucci.leftArm = leftArm;
+      pucci.rightArm = rightArm;
+      pucci.leftEye = leftEye;
+      pucci.rightEye = rightEye;
+      pucci.mouthOuter = mouthOuter;
+      pucci.mouthInner = mouthInner;
+
+      // AI state
+      pucci.userData.velocity = new THREE.Vector3();
+      pucci.userData.followOffset = new THREE.Vector3(1.2, 0, 0.5);
+      pucci.userData.isMoving = false;
+
+      return pucci;
+    }
+
+    const pucci = createPucci();
+    pucci.position.set(1.5, 0, 0.8);
+    scene.add(pucci);
 
     // ── Ground ──
     function createGround() {
@@ -1040,6 +1119,83 @@ SPD: 5 / 9</div>
         avatar.leftEar.rotation.z = -0.4;
         avatar.twinTailL.rotation.x = -0.3;
         avatar.twinTailR.rotation.x = -0.3;
+      }
+
+      // ── Pucci Pet AI ──
+      {
+        // Calculate target position (offset from avatar, in avatar's local space)
+        const offset = pucci.userData.followOffset;
+        const targetPos = new THREE.Vector3(
+          avatar.position.x + Math.cos(avatar.rotation.y) * offset.x + Math.sin(avatar.rotation.y) * offset.z,
+          GROUND_Y - 0.75 + 0.05,
+          avatar.position.z - Math.sin(avatar.rotation.y) * offset.x + Math.cos(avatar.rotation.y) * offset.z
+        );
+
+        const dx = targetPos.x - pucci.position.x;
+        const dz = targetPos.z - pucci.position.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+
+        const pucciSpeed = speed * 0.9;
+        pucci.userData.isMoving = dist > 0.3;
+
+        if (dist > 0.3) {
+          const moveAmount = Math.min(pucciSpeed * delta, dist);
+          pucci.position.x += (dx / dist) * moveAmount;
+          pucci.position.z += (dz / dist) * moveAmount;
+
+          // Face movement direction
+          const targetAngle = Math.atan2(dx, dz);
+          let angleDiff = targetAngle - pucci.rotation.y;
+          while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+          while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+          pucci.rotation.y += angleDiff * 6 * delta;
+        }
+
+        // Pucci animation
+        const baseY = GROUND_Y - 0.75 + 0.05;
+        const baseEyeY = 0.7, baseEyeLX = -0.16, baseEyeRX = 0.16;
+        let eyeSX = 1, eyeSY = 1, eyeOX = 0, eyeOY = 0;
+        let mthSX = 1, mthSY = 1;
+
+        // Blink
+        const blinkCycle = animTime % (3.5 + Math.sin(animTime * 0.7) * 1.2);
+        if (blinkCycle < 0.1) { eyeSY = 0.2; }
+
+        if (pucci.userData.isMoving) {
+          const hopFreq = 10;
+          pucci.position.y = baseY + Math.abs(Math.sin(animTime * hopFreq)) * 0.12;
+          pucci.leftLeg.position.y = 0.02 + Math.sin(animTime * hopFreq) * 0.04;
+          pucci.rightLeg.position.y = 0.02 - Math.sin(animTime * hopFreq) * 0.04;
+          pucci.leftArm.position.y = 0.45 + Math.sin(animTime * hopFreq) * 0.05;
+          pucci.rightArm.position.y = 0.45 - Math.sin(animTime * hopFreq) * 0.05;
+          pucci.bodyMesh.rotation.z = Math.sin(animTime * hopFreq * 0.5) * 0.08;
+          eyeOY = 0.01; // eyes slightly up (determined)
+        } else {
+          pucci.position.y = baseY + Math.sin(animTime * 2.5) * 0.03;
+          pucci.bodyMesh.rotation.z = Math.sin(animTime * 1.8) * 0.03;
+          pucci.leftLeg.position.y = 0.02 + Math.sin(animTime * 3) * 0.015;
+          pucci.rightLeg.position.y = 0.02 + Math.sin(animTime * 3 + Math.PI) * 0.015;
+          pucci.leftArm.position.y = 0.45 + Math.sin(animTime * 2) * 0.02;
+          pucci.rightArm.position.y = 0.45 + Math.sin(animTime * 2 + 1) * 0.02;
+
+          // Look at player
+          const lookDx = avatar.position.x - pucci.position.x;
+          const lookDz = avatar.position.z - pucci.position.z;
+          const lookAngle = Math.atan2(lookDx, lookDz);
+          let lookDiff = lookAngle - pucci.rotation.y;
+          while (lookDiff > Math.PI) lookDiff -= Math.PI * 2;
+          while (lookDiff < -Math.PI) lookDiff += Math.PI * 2;
+          pucci.rotation.y += lookDiff * 2 * delta;
+          eyeOX = Math.sin(animTime * 0.8) * 0.01;
+        }
+
+        // Apply face
+        pucci.leftEye.position.set(baseEyeLX + eyeOX, baseEyeY + eyeOY, 0.39);
+        pucci.rightEye.position.set(baseEyeRX + eyeOX, baseEyeY + eyeOY, 0.39);
+        pucci.leftEye.scale.set(eyeSX, eyeSY, 1);
+        pucci.rightEye.scale.set(eyeSX, eyeSY, 1);
+        pucci.mouthOuter.scale.set(mthSX, mthSY, 1);
+        pucci.mouthInner.scale.set(mthSX, mthSY, 1);
       }
 
       // Camera follow
