@@ -67,6 +67,7 @@
 <body data-tauri-drag-region>
   <div id="notification-bubble"></div>
   <div id="context-menu" class="context-menu">
+    <div class="menu-item" id="menu-toggle-weapon">切換武器 🗡️</div>
     <div class="menu-item" id="menu-test-notify">發送測試通知泡泡</div>
     <div class="menu-item" id="menu-quit">離開</div>
   </div>
@@ -610,6 +611,65 @@
     avatar.leftArm.add(leftCarrot);
     avatar.leftCarrot = leftCarrot;
 
+    // ── Diamond Sword (Minecraft style) ──
+    function createDiamondSword() {
+      const sword = new THREE.Group();
+      const diamondMat = new THREE.MeshStandardMaterial({ color: 0x2CCDB1, roughness: 0.3, metalness: 0.4 });
+      const diamondDarkMat = new THREE.MeshStandardMaterial({ color: 0x1A8A76, roughness: 0.3, metalness: 0.4 });
+      const handleMat = new THREE.MeshStandardMaterial({ color: 0x6B4226, roughness: 0.8 });
+      const guardMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.5, metalness: 0.6 });
+
+      // Handle (brown stick) — closest to hand (top)
+      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.3, 0.06), handleMat);
+      handle.position.y = 0.1;
+      sword.add(handle);
+
+      // Guard / crossguard (gray)
+      const guard = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.08), guardMat);
+      guard.position.y = -0.08;
+      sword.add(guard);
+
+      // Blade segments (diamond teal, pixelated look) — pointing outward (down)
+      const blade1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.18, 0.06), diamondMat);
+      blade1.position.y = -0.22;
+      sword.add(blade1);
+      const blade2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.18, 0.06), diamondDarkMat);
+      blade2.position.y = -0.40;
+      sword.add(blade2);
+      const blade3 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.18, 0.06), diamondMat);
+      blade3.position.y = -0.58;
+      sword.add(blade3);
+      // Tip (tapered)
+      const tip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.06), diamondDarkMat);
+      tip.position.y = -0.72;
+      sword.add(tip);
+
+      return sword;
+    }
+
+    const leftSword = createDiamondSword();
+    leftSword.position.set(0, -1.65, 0.15);
+    leftSword.scale.set(2.5, 2.5, 2.5);
+    leftSword.visible = false;
+    avatar.leftArm.add(leftSword);
+    avatar.leftSword = leftSword;
+
+    let currentWeapon = 'carrot'; // 'carrot' or 'sword'
+
+    function toggleWeapon() {
+      if (currentWeapon === 'carrot') {
+        currentWeapon = 'sword';
+        avatar.leftCarrot.visible = false;
+        avatar.leftSword.visible = true;
+        showNotification('裝備了鑽石劍！⚔️');
+      } else {
+        currentWeapon = 'carrot';
+        avatar.leftCarrot.visible = true;
+        avatar.leftSword.visible = false;
+        showNotification('換回紅蘿蔔 🥕');
+      }
+    }
+
     // ── Raycaster for click detection ──
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
@@ -879,6 +939,10 @@
       contextMenu.style.left = e.clientX + 'px';
       contextMenu.style.top = e.clientY + 'px';
       contextMenu.style.display = 'block';
+    });
+    document.getElementById('menu-toggle-weapon').addEventListener('click', () => {
+      toggleWeapon();
+      contextMenu.style.display = 'none';
     });
     document.getElementById('menu-test-notify').addEventListener('click', () => {
       showNotification('這是一段測試文字 🐰🥕');
@@ -1271,9 +1335,10 @@
           a.twinTailL.rotation.x = 0.15+Math.sin(animTime*1.5)*0.04;
           a.twinTailR.rotation.x = 0.15+Math.sin(animTime*1.5+0.5)*0.04;
           a.rotation.y = lp(a.rotation.y, 0, 2, delta);
-          // Show eat carrot, hide left-hand carrot
+          // Show eat carrot, hide left-hand weapon
           a.eatCarrot.visible = true;
           a.leftCarrot.visible = false;
+          a.leftSword.visible = false;
           break;
         }
 
@@ -1301,10 +1366,11 @@
         }
       }
 
-      // Carrot visibility: hide eat carrot when not eating, show left carrot when not eating
+      // Weapon visibility: hide eat carrot when not eating, show current weapon
       if (currentAction !== 'eat') {
         a.eatCarrot.visible = false;
-        a.leftCarrot.visible = true;
+        a.leftCarrot.visible = currentWeapon === 'carrot';
+        a.leftSword.visible = currentWeapon === 'sword';
       }
 
       // Reset body rotation
