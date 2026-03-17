@@ -76,8 +76,8 @@
     // ── Scene (transparent background) ──
     const scene = new THREE.Scene();
 
-    const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0.4, 2.8, 6.5);
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0.4, 2.8, 7.5);
     camera.lookAt(0.4, 1.3, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
