@@ -567,6 +567,19 @@
     avatar.blushL = blushL;
     avatar.blushR = blushR;
 
+    // ── Rabbit eyelids (for blinking) ──
+    const eyelidMat = new THREE.MeshStandardMaterial({ color: 0xFFDDE8, roughness: 0.8, transparent: false });
+    const eyelidL = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.04), eyelidMat);
+    eyelidL.position.set(-0.125, -0.125, 0.52);
+    eyelidL.scale.set(1, 0, 1);
+    avatar.head.add(eyelidL);
+    const eyelidR = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.04), eyelidMat);
+    eyelidR.position.set(0.25, -0.125, 0.52);
+    eyelidR.scale.set(1, 0, 1);
+    avatar.head.add(eyelidR);
+    avatar.eyelidL = eyelidL;
+    avatar.eyelidR = eyelidR;
+
     // ── Right-hand carrot (for eat action) ──
     function createCarrot() {
       const carrot = new THREE.Group();
@@ -1299,6 +1312,18 @@
       // Reset position for non-sit/sleep/run/stretch actions
       if (!isQuitting && !['sit','sleep','run','stretch','sneeze','eat','headpat'].includes(currentAction)) {
         if (bounceY === 0) a.position.y = lp(a.position.y, 0.75, 3, delta);
+      }
+
+      // ── Rabbit eye blink animation ──
+      {
+        const blinkCycle = animTime % (4.2 + Math.sin(animTime * 0.5) * 1.5);
+        let blinkClose = 0;
+        if (blinkCycle < 0.2) {
+          blinkClose = Math.sin((blinkCycle / 0.2) * Math.PI);
+        }
+        const shouldBlink = !isStarting && !isQuitting && currentAction !== 'sleep';
+        avatar.eyelidL.scale.set(1, shouldBlink ? blinkClose : 0, 1);
+        avatar.eyelidR.scale.set(1, shouldBlink ? blinkClose : 0, 1);
       }
 
       // ── Pucci expressive animation ──
