@@ -67,6 +67,7 @@
 <body data-tauri-drag-region>
   <div id="notification-bubble"></div>
   <div id="context-menu" class="context-menu">
+    <div class="menu-item" id="menu-toggle-roam">開始亂跑 🐇</div>
     <div class="menu-item" id="menu-toggle-weapon">切換武器 🗡️</div>
     <div class="menu-item" id="menu-test-notify">發送測試通知泡泡</div>
     <div class="menu-item" id="menu-quit">離開</div>
@@ -930,7 +931,17 @@
         window.__TAURI__.window.getCurrentWindow().startDragging();
       }
     });
-    document.addEventListener('mouseup', () => { isDragging = false; });
+    document.addEventListener('mouseup', async () => {
+      isDragging = false;
+      // Sync roam position after user drag
+      if (isRoaming && roamInited && window.__TAURI__) {
+        const win = window.__TAURI__.window.getCurrentWindow();
+        const pos = await win.outerPosition();
+        const sf = await win.scaleFactor();
+        roamCurrentX = pos.x / sf;
+        roamCurrentY = pos.y / sf;
+      }
+    });
 
     // Right-click context menu
     const contextMenu = document.getElementById('context-menu');
@@ -940,6 +951,100 @@
       contextMenu.style.top = e.clientY + 'px';
       contextMenu.style.display = 'block';
     });
+    // ── Roaming (move window around screen) ──
+    let isRoaming = false;
+    let roamTargetX = 0, roamTargetY = 0;
+    let roamCurrentX = 0, roamCurrentY = 0;
+    let roamScreenW = 1920, roamScreenH = 1080;
+    let roamWinW = 300, roamWinH = 400;
+    let roamInited = false;
+    let roamPickTimer = 0;
+
+    async function initRoam() {
+      if (!window.__TAURI__) return;
+      const win = window.__TAURI__.window.getCurrentWindow();
+      try {
+        const monitors = await window.__TAURI__.window.availableMonitors();
+        if (monitors.length > 0) {
+          const m = monitors[0];
+          roamScreenW = m.size.width / m.scaleFactor;
+          roamScreenH = m.size.height / m.scaleFactor;
+        }
+        const size = await win.innerSize();
+        const scaleFactor = await win.scaleFactor();
+        roamWinW = size.width / scaleFactor;
+        roamWinH = size.height / scaleFactor;
+        const pos = await win.outerPosition();
+        roamCurrentX = pos.x / scaleFactor;
+        roamCurrentY = pos.y / scaleFactor;
+        roamTargetX = roamCurrentX;
+        roamTargetY = roamCurrentY;
+        roamInited = true;
+      } catch(e) { console.warn('roam init failed', e); }
+    }
+
+    function pickRoamTarget() {
+      const margin = 20;
+      roamTargetX = margin + Math.random() * (roamScreenW - roamWinW - margin * 2);
+      roamTargetY = margin + Math.random() * (roamScreenH - roamWinH - margin * 2);
+    }
+
+    let roamSpeed = 0; // current speed (pixels/sec)
+    const roamMaxSpeed = 500;
+    const roamAccel = 600;  // acceleration
+    const roamDecel = 400;  // deceleration zone
+
+    async function updateRoam(delta) {
+      if (!isRoaming || !roamInited || !window.__TAURI__) return;
+      roamPickTimer -= delta;
+      if (roamPickTimer <= 0) {
+        pickRoamTarget();
+        roamPickTimer = 3 + Math.random() * 4;
+      }
+      const dx = roamTargetX - roamCurrentX;
+      const dy = roamTargetY - roamCurrentY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 2) {
+        // Decelerate when close to target, accelerate otherwise
+        const decelDist = (roamSpeed * roamSpeed) / (2 * roamDecel);
+        if (dist <= decelDist) {
+          roamSpeed = Math.max(roamSpeed - roamDecel * delta, 30);
+        } else {
+          roamSpeed = Math.min(roamSpeed + roamAccel * delta, roamMaxSpeed);
+        }
+        const step = Math.min(roamSpeed * delta, dist);
+        roamCurrentX += (dx / dist) * step;
+        roamCurrentY += (dy / dist) * step;
+        const win = window.__TAURI__.window.getCurrentWindow();
+        const scaleFactor = await win.scaleFactor();
+        await win.setPosition(new window.__TAURI__.window.PhysicalPosition(
+          Math.round(roamCurrentX * scaleFactor),
+          Math.round(roamCurrentY * scaleFactor)
+        ));
+      } else {
+        roamSpeed = 0; // stopped at target, will accelerate to next
+      }
+    }
+
+    const roamMenuEl = document.getElementById('menu-toggle-roam');
+    roamMenuEl.addEventListener('click', async () => {
+      isRoaming = !isRoaming;
+      roamMenuEl.textContent = isRoaming ? '停止亂跑 🐇' : '開始亂跑 🐇';
+      if (isRoaming) {
+        await initRoam();
+        roamPickTimer = 0; // pick target immediately
+        currentAction = 'run';
+        actionTimer = 0;
+        nextActionDelay = 999;
+        showNotification('兔兔開始亂跑！🐇💨');
+      } else {
+        nextActionDelay = 0; // resume normal actions
+        pickNextAction();
+        showNotification('兔兔停下來了 🐇');
+      }
+      contextMenu.style.display = 'none';
+    });
+
     document.getElementById('menu-toggle-weapon').addEventListener('click', () => {
       toggleWeapon();
       contextMenu.style.display = 'none';
@@ -1030,7 +1135,19 @@
       animTime += delta;
       actionTimer += delta;
 
-      if (!isQuitting && !isStarting && actionTimer > nextActionDelay && currentAction !== 'jump' && currentAction !== 'sneeze') pickNextAction();
+      if (!isQuitting && !isStarting && actionTimer > nextActionDelay && currentAction !== 'jump' && currentAction !== 'sneeze') {
+        if (isRoaming) {
+          // Force run animation while roaming
+          currentAction = 'run';
+          actionTimer = 0;
+          nextActionDelay = 999;
+        } else {
+          pickNextAction();
+        }
+      }
+
+      // Roaming: move window around screen
+      updateRoam(delta);
 
       // Bounce physics
       if (!isStarting && currentAction === 'jump' && actionTimer < 0.01) bounceVel = 5;

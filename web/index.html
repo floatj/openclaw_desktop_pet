@@ -54,7 +54,8 @@ SPD: 5 / 9</div>
   <div id="controls-info">
     <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移動 &nbsp;|&nbsp;
     <kbd>Space</kbd> 跳躍 &nbsp;|&nbsp;
-    <kbd>Shift</kbd> 跑步 &nbsp;|&nbsp;
+    <kbd>Ctrl</kbd> 跑步 &nbsp;|&nbsp;
+    <kbd>Shift</kbd> 蹲下 &nbsp;|&nbsp;
     <kbd>+</kbd><kbd>-</kbd> 加減速 &nbsp;|&nbsp;
     滑鼠拖曳旋轉 &nbsp;|&nbsp;
     滾輪縮放
@@ -536,6 +537,7 @@ SPD: 5 / 9</div>
       body.position.y = 0.75;
       body.castShadow = true;
       avatar.add(body);
+      avatar.body = body;
 
       // Arms (0.5x1.5x0.5, slim model uses 0.375)
       const armW = 0.375;
@@ -967,6 +969,8 @@ SPD: 5 / 9</div>
     let animTime = 0;
     let isMoving = false;
     let isRunning = false;
+    let isCrouching = false;
+    let crouchAmount = 0; // 0 = standing, 1 = fully crouched
     let walkSpeed = 5;
     let runSpeed = 9;
     const JUMP_FORCE = 6;
@@ -1007,8 +1011,10 @@ SPD: 5 / 9</div>
         fpsTime = 0;
       }
 
-      isRunning = keys['ShiftLeft'] || keys['ShiftRight'];
-      const speed = isRunning ? runSpeed : walkSpeed;
+      isRunning = keys['ControlLeft'] || keys['ControlRight'];
+      isCrouching = (keys['ShiftLeft'] || keys['ShiftRight']) && isGrounded;
+      if (isCrouching) isRunning = false;
+      const speed = isCrouching ? walkSpeed * 0.3 : (isRunning ? runSpeed : walkSpeed);
       const moveDir = new THREE.Vector3();
 
       if (keys['KeyW'] || keys['ArrowUp']) moveDir.z -= 1;
@@ -1043,7 +1049,7 @@ SPD: 5 / 9</div>
       }
 
       // Jump
-      if (keys['Space'] && isGrounded) {
+      if (keys['Space'] && isGrounded && !isCrouching) {
         playerVelocity.y = JUMP_FORCE;
         isGrounded = false;
       }
@@ -1052,8 +1058,9 @@ SPD: 5 / 9</div>
       if (!isGrounded) {
         playerVelocity.y -= GRAVITY * delta;
         avatar.position.y += playerVelocity.y * delta;
-        if (avatar.position.y <= GROUND_Y) {
-          avatar.position.y = GROUND_Y;
+        const effectiveGroundY = GROUND_Y - crouchAmount * 0.2;
+        if (avatar.position.y <= effectiveGroundY) {
+          avatar.position.y = effectiveGroundY;
           playerVelocity.y = 0;
           isGrounded = true;
         }
@@ -1062,6 +1069,14 @@ SPD: 5 / 9</div>
       const bound = 14;
       avatar.position.x = Math.max(-bound, Math.min(bound, avatar.position.x));
       avatar.position.z = Math.max(-bound, Math.min(bound, avatar.position.z));
+
+      // Crouch amount lerp
+      crouchAmount += ((isCrouching ? 1 : 0) - crouchAmount) * 10 * delta;
+      // Smoothly lower/raise avatar when crouching on ground
+      if (isGrounded) {
+        const targetY = GROUND_Y - crouchAmount * 0.2;
+        avatar.position.y += (targetY - avatar.position.y) * 12 * delta;
+      }
 
       // ── Limb Animation ──
       if (isMoving) {
@@ -1074,7 +1089,7 @@ SPD: 5 / 9</div>
         avatar.rightLeg.rotation.x = -Math.sin(animTime * animSpeed) * legSwing;
         avatar.leftLeg.rotation.x = Math.sin(animTime * animSpeed) * legSwing;
 
-        avatar.head.position.y = 1.75 + Math.abs(Math.sin(animTime * animSpeed)) * 0.06;
+        avatar.head.position.y = (1.75 - crouchAmount * 0.45) + Math.abs(Math.sin(animTime * animSpeed)) * 0.06;
 
         // Ear bounce
         avatar.rightEar.rotation.z = 0.12 + Math.sin(animTime * animSpeed * 1.5) * 0.15;
@@ -1094,7 +1109,7 @@ SPD: 5 / 9</div>
 
         avatar.rightArm.rotation.z = Math.sin(animTime * 1.5) * 0.04;
         avatar.leftArm.rotation.z = -Math.sin(animTime * 1.5) * 0.04;
-        avatar.head.position.y = 1.75 + Math.sin(animTime * 2) * 0.025;
+        avatar.head.position.y = (1.75 - crouchAmount * 0.45) + Math.sin(animTime * 2) * 0.025;
 
         // Idle ear wiggle
         avatar.rightEar.rotation.z = 0.12 + Math.sin(animTime * 2.5) * 0.08;
@@ -1105,6 +1120,28 @@ SPD: 5 / 9</div>
         avatar.twinTailR.rotation.x = 0.15 + Math.sin(animTime * 1.5 + 0.5) * 0.05;
         avatar.twinTailL.rotation.z = Math.sin(animTime * 1.2) * 0.03;
         avatar.twinTailR.rotation.z = -Math.sin(animTime * 1.2) * 0.03;
+      }
+
+      // Crouch pose overlay — Minecraft-style: whole torso leans forward ~28°,
+      // arms hang forward with the body, head compensates slightly downward,
+      // legs barely bend (hitbox just gets shorter, no deep knee bend).
+      {
+        const ca = crouchAmount;
+        // Core: tilt the torso forward
+        avatar.body.rotation.x = ca * 0.5;
+        // Head tilts slightly forward (looking a bit down, not fully compensating)
+        avatar.head.rotation.x = ca * 0.2;
+        if (ca > 0.01) {
+          // Arms follow the body lean forward
+          avatar.rightArm.rotation.x += ca * 0.5;
+          avatar.leftArm.rotation.x += ca * 0.5;
+          // Slight leg bend (minimal — Minecraft sneak is mostly a torso lean)
+          avatar.rightLeg.rotation.x += ca * 0.2;
+          avatar.leftLeg.rotation.x += ca * 0.2;
+          // Ears droop gently forward with the lean
+          avatar.rightEar.rotation.z = 0.12 + ca * 0.12;
+          avatar.leftEar.rotation.z = -0.12 - ca * 0.12;
+        }
       }
 
       // Jump pose
