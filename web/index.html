@@ -683,14 +683,14 @@ SPD: 5 / 9</div>
 
       // AI state
       pucci.userData.velocity = new THREE.Vector3();
-      pucci.userData.followOffset = new THREE.Vector3(1.2, 0, 0.5);
+      pucci.userData.followOffset = new THREE.Vector3(1.0, 0, -1.2);
       pucci.userData.isMoving = false;
 
       return pucci;
     }
 
     const pucci = createPucci();
-    pucci.position.set(1.5, 0, 0.8);
+    pucci.position.set(1.0, 0, -1.2);
     scene.add(pucci);
 
     // ── Ground ──
@@ -1089,7 +1089,7 @@ SPD: 5 / 9</div>
         avatar.rightLeg.rotation.x = -Math.sin(animTime * animSpeed) * legSwing;
         avatar.leftLeg.rotation.x = Math.sin(animTime * animSpeed) * legSwing;
 
-        avatar.head.position.y = (1.75 - crouchAmount * 0.45) + Math.abs(Math.sin(animTime * animSpeed)) * 0.06;
+        avatar.head.position.y = 1.75 +Math.abs(Math.sin(animTime * animSpeed)) * 0.06;
 
         // Ear bounce
         avatar.rightEar.rotation.z = 0.12 + Math.sin(animTime * animSpeed * 1.5) * 0.15;
@@ -1109,7 +1109,7 @@ SPD: 5 / 9</div>
 
         avatar.rightArm.rotation.z = Math.sin(animTime * 1.5) * 0.04;
         avatar.leftArm.rotation.z = -Math.sin(animTime * 1.5) * 0.04;
-        avatar.head.position.y = (1.75 - crouchAmount * 0.45) + Math.sin(animTime * 2) * 0.025;
+        avatar.head.position.y = 1.75 +Math.sin(animTime * 2) * 0.025;
 
         // Idle ear wiggle
         avatar.rightEar.rotation.z = 0.12 + Math.sin(animTime * 2.5) * 0.08;
@@ -1123,25 +1123,17 @@ SPD: 5 / 9</div>
       }
 
       // Crouch pose overlay — Minecraft-style: whole torso leans forward ~28°,
-      // arms hang forward with the body, head compensates slightly downward,
-      // legs barely bend (hitbox just gets shorter, no deep knee bend).
+      // arms blend toward the lean angle (stop swinging), head compensates slightly.
       {
         const ca = crouchAmount;
-        // Core: tilt the torso forward
+        // Core: tilt the torso forward (always set so it resets to 0 when ca→0)
         avatar.body.rotation.x = ca * 0.5;
-        // Head tilts slightly forward (looking a bit down, not fully compensating)
-        avatar.head.rotation.x = ca * 0.2;
-        if (ca > 0.01) {
-          // Arms follow the body lean forward
-          avatar.rightArm.rotation.x += ca * 0.5;
-          avatar.leftArm.rotation.x += ca * 0.5;
-          // Slight leg bend (minimal — Minecraft sneak is mostly a torso lean)
-          avatar.rightLeg.rotation.x += ca * 0.2;
-          avatar.leftLeg.rotation.x += ca * 0.2;
-          // Ears droop gently forward with the lean
-          avatar.rightEar.rotation.z = 0.12 + ca * 0.12;
-          avatar.leftEar.rotation.z = -0.12 - ca * 0.12;
-        }
+        avatar.head.rotation.x = -ca * 0.15; // head compensates to look forward
+        // Blend arms toward lean target — prevents wild swinging when crouching.
+        // ca=0 → unchanged animation; ca=1 → fixed at body lean angle (0.5 rad forward).
+        const armLean = 0.5;
+        avatar.rightArm.rotation.x = avatar.rightArm.rotation.x * (1 - ca) + armLean * ca;
+        avatar.leftArm.rotation.x  = avatar.leftArm.rotation.x  * (1 - ca) + armLean * ca;
       }
 
       // Jump pose
