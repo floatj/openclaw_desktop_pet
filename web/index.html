@@ -89,7 +89,7 @@ SPD: 5 / 9</div>
     skyCtx.fillRect(0, 0, 1, 256);
     const skyTex = new THREE.CanvasTexture(skyCanvas);
     scene.background = skyTex;
-    scene.fog = new THREE.FogExp2(0xB3E5FC, 0.012);
+    scene.fog = new THREE.FogExp2(0xB3E5FC, 0.007);
 
     const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
     camera.position.set(0, 3.5, 7);
@@ -696,7 +696,7 @@ SPD: 5 / 9</div>
     // ── Ground ──
     function createGround() {
       const groundGroup = new THREE.Group();
-      const size = 32;
+      const size = 64;
 
       const grassCanvas = document.createElement('canvas');
       grassCanvas.width = 16;
@@ -762,6 +762,13 @@ SPD: 5 / 9</div>
     }
     scene.add(createGround());
 
+    // ── Collision system ──
+    // Each entry: { minX, maxX, minZ, maxZ } (2D footprint, Y ignored)
+    const collidables = [];
+    function registerBox(cx, cz, halfW, halfD) {
+      collidables.push({ minX: cx - halfW, maxX: cx + halfW, minZ: cz - halfD, maxZ: cz + halfD });
+    }
+
     // ── Flowers ──
     function addFlowers() {
       const flowerColors = [0xFF69B4, 0xFFEB3B, 0xFF5722, 0xE91E63, 0x9C27B0, 0x2196F3, 0xFFFFFF];
@@ -779,8 +786,8 @@ SPD: 5 / 9</div>
         petal.rotation.y = Math.random() * Math.PI;
         flower.add(petal);
 
-        const x = (Math.random() - 0.5) * 28;
-        const z = (Math.random() - 0.5) * 28;
+        const x = (Math.random() - 0.5) * 58;
+        const z = (Math.random() - 0.5) * 58;
         // Don't place too close to center
         if (Math.abs(x) < 2 && Math.abs(z) < 2) continue;
         flower.position.set(x, 0, z);
@@ -867,17 +874,30 @@ SPD: 5 / 9</div>
 
     // Place trees
     const treeConfigs = [
-      { pos: [-8, 0, -8], variant: 'oak' },
-      { pos: [9, 0, -5], variant: 'birch' },
-      { pos: [-6, 0, 10], variant: 'sakura' },
-      { pos: [11, 0, 9], variant: 'oak' },
-      { pos: [-12, 0, 2], variant: 'sakura' },
-      { pos: [4, 0, -11], variant: 'birch' },
+      // Inner ring (original, slightly pushed out)
+      { pos: [-10, 0, -10], variant: 'oak' },
+      { pos: [11, 0, -6],   variant: 'birch' },
+      { pos: [-8,  0,  12], variant: 'sakura' },
+      { pos: [13,  0,  10], variant: 'oak' },
+      { pos: [-14, 0,   3], variant: 'sakura' },
+      { pos: [5,   0, -13], variant: 'birch' },
+      // Outer ring (new)
+      { pos: [-22, 0, -18], variant: 'oak' },
+      { pos: [20,  0, -22], variant: 'birch' },
+      { pos: [-18, 0,  20], variant: 'sakura' },
+      { pos: [24,  0,  18], variant: 'oak' },
+      { pos: [-26, 0,   8], variant: 'birch' },
+      { pos: [8,   0, -26], variant: 'sakura' },
+      { pos: [26,  0,  -8], variant: 'oak' },
+      { pos: [-8,  0,  26], variant: 'birch' },
+      { pos: [18,  0,  26], variant: 'sakura' },
+      { pos: [-24, 0, -6],  variant: 'oak' },
     ];
     treeConfigs.forEach(tc => {
       const tree = createTree(tc.variant);
       tree.position.set(...tc.pos);
       scene.add(tree);
+      registerBox(tc.pos[0], tc.pos[2], 0.6, 0.6); // trunk footprint
     });
 
     // ── Decorative blocks ──
@@ -909,6 +929,7 @@ SPD: 5 / 9</div>
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         scene.add(mesh);
+        registerBox(pos[0], pos[2], 0.5, 0.5);
       });
     });
 
@@ -945,9 +966,9 @@ SPD: 5 / 9</div>
       for (let i = 0; i < 30; i++) {
         const petal = new THREE.Mesh(petalGeo, petalMat);
         petal.position.set(
-          (Math.random() - 0.5) * 20,
+          (Math.random() - 0.5) * 50,
           2 + Math.random() * 8,
-          (Math.random() - 0.5) * 20
+          (Math.random() - 0.5) * 50
         );
         petal.userData.velocity = {
           x: (Math.random() - 0.5) * 0.3,
@@ -976,6 +997,7 @@ SPD: 5 / 9</div>
     const JUMP_FORCE = 6;
     const GRAVITY = 15;
     const GROUND_Y = 0.75;
+    const PLAYER_RADIUS = 0.4;
 
     window.addEventListener('keydown', (e) => {
       keys[e.code] = true;
@@ -1066,9 +1088,26 @@ SPD: 5 / 9</div>
         }
       }
 
-      const bound = 14;
+      const bound = 28;
       avatar.position.x = Math.max(-bound, Math.min(bound, avatar.position.x));
       avatar.position.z = Math.max(-bound, Math.min(bound, avatar.position.z));
+
+      // ── Collision resolution ──
+      for (const box of collidables) {
+        const px = avatar.position.x;
+        const pz = avatar.position.z;
+        const closestX = Math.max(box.minX, Math.min(box.maxX, px));
+        const closestZ = Math.max(box.minZ, Math.min(box.maxZ, pz));
+        const dx = px - closestX;
+        const dz = pz - closestZ;
+        const dist2 = dx * dx + dz * dz;
+        if (dist2 < PLAYER_RADIUS * PLAYER_RADIUS) {
+          // Push player out along the penetration normal
+          const dist = dist2 > 0.0001 ? Math.sqrt(dist2) : 0.0001;
+          avatar.position.x = closestX + (dx / dist) * PLAYER_RADIUS;
+          avatar.position.z = closestZ + (dz / dist) * PLAYER_RADIUS;
+        }
+      }
 
       // Crouch amount lerp
       crouchAmount += ((isCrouching ? 1 : 0) - crouchAmount) * 10 * delta;
