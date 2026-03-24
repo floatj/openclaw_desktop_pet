@@ -12,8 +12,8 @@
     "windows": [
       {
         "title": "Minecraft Pet",
-        "width": 300,
-        "height": 400,
+        "width": 360,
+        "height": 500,
         "resizable": false,
         "decorations": false,
         "transparent": true,
