@@ -146,20 +146,19 @@
           ctx.fillStyle = '#1A3060'; ctx.fillRect(11, 13, 1, 1); ctx.fillRect(13, 13, 1, 1);
           ctx.fillStyle = '#FFFFFF'; ctx.fillRect(10, 13, 1, 1); ctx.fillRect(14, 13, 1, 1);
           ctx.fillStyle = '#FFB0B0'; ctx.fillRect(9, 14, 2, 1); ctx.fillRect(14, 14, 1, 1);
-          // ^ smile: corners up
-          ctx.fillStyle = '#E88A8A'; ctx.fillRect(11, 15, 1, 1); ctx.fillRect(13, 15, 1, 1);
-          ctx.fillStyle = SKIN_SHADOW; ctx.fillRect(12, 14, 1, 1);
+          // U-curve smile: corners at y:14, dip at y:15
+          ctx.fillStyle = '#E88A8A'; ctx.fillRect(11, 14, 1, 1); ctx.fillRect(12, 15, 1, 1); ctx.fillRect(13, 14, 1, 1);
           break;
         case 'angry':
-          // Inner-raised eyebrow pixels
-          ctx.fillStyle = '#3A2010'; ctx.fillRect(11, 11, 1, 1); ctx.fillRect(13, 11, 1, 1);
+          // Wider 2px brows above inner corners → more visible angry brow
+          ctx.fillStyle = '#3A2010'; ctx.fillRect(10, 11, 2, 1); ctx.fillRect(13, 11, 2, 1);
           ctx.fillStyle = '#4A90D9'; ctx.fillRect(10, 12, 2, 2); ctx.fillRect(13, 12, 2, 2);
           // Dark inner corner = furrow shadow
           ctx.fillStyle = '#1A3060'; ctx.fillRect(11, 12, 1, 1); ctx.fillRect(13, 12, 1, 1);
           ctx.fillStyle = '#1A3060'; ctx.fillRect(11, 13, 1, 1); ctx.fillRect(13, 13, 1, 1);
           ctx.fillStyle = '#FFFFFF'; ctx.fillRect(10, 12, 1, 1); ctx.fillRect(14, 12, 1, 1);
-          // No blush; frown corners
-          ctx.fillStyle = '#A05050'; ctx.fillRect(10, 15, 1, 1); ctx.fillRect(14, 15, 1, 1);
+          // No blush; arch-frown: corners down (y:15), center up (y:14)
+          ctx.fillStyle = '#A05050'; ctx.fillRect(11, 15, 1, 1); ctx.fillRect(12, 14, 1, 1); ctx.fillRect(13, 15, 1, 1);
           break;
         case 'sleepy':
           // Droopy eyelid covers top half of each eye
@@ -184,8 +183,9 @@
           ctx.fillStyle = '#1A3060'; ctx.fillRect(11, 13, 1, 1); ctx.fillRect(13, 13, 1, 1);
           ctx.fillStyle = '#FFFFFF'; ctx.fillRect(10, 12, 1, 1); ctx.fillRect(13, 12, 1, 1);
           // Extra-large blush that extends upward
-          ctx.fillStyle = '#FF8080'; ctx.fillRect(9, 14, 2, 1); ctx.fillRect(14, 14, 1, 1);
-          ctx.fillStyle = '#FFB0C0'; ctx.fillRect(9, 13, 1, 1); ctx.fillRect(14, 13, 1, 1);
+          // Symmetric 2px cheeks at y:14; upper blush only on left (x:14,y:13 overlaps right eye)
+          ctx.fillStyle = '#FF8080'; ctx.fillRect(9, 14, 2, 1); ctx.fillRect(13, 14, 2, 1);
+          ctx.fillStyle = '#FFB0C0'; ctx.fillRect(9, 13, 1, 1);
           // Small smile
           ctx.fillStyle = '#E88A8A'; ctx.fillRect(12, 15, 1, 1);
           ctx.fillStyle = SKIN_SHADOW; ctx.fillRect(12, 14, 1, 1);
