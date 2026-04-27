@@ -71,6 +71,7 @@
     <div class="menu-item" id="menu-toggle-weapon">切換武器 🗡️</div>
     <div class="menu-item" id="menu-emotion">切換表情 😐</div>
     <div class="menu-item" id="menu-test-notify">發送測試通知泡泡</div>
+    <div class="menu-item" id="menu-debug-laptop">💻 觸發打字動作</div>
     <div class="menu-item" id="menu-quit">離開</div>
   </div>
   <script type="module">
@@ -954,18 +955,18 @@
     function createLaptop() {
       const group = new THREE.Group();
 
-      // Materials – Minecraft blocky palette, dark aluminium feel
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x25253A, roughness: 0.4, metalness: 0.25 });
-      const bodyTopMat = new THREE.MeshStandardMaterial({ color: 0x32324A, roughness: 0.5 });
-      const bezelMat = new THREE.MeshStandardMaterial({ color: 0x1A1A28, roughness: 0.6 });
+      // Materials – brighter palette so they stay visible after Y-rotation (light hits back shell)
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x4A4A68, roughness: 0.5, metalness: 0.1, emissive: 0x15152A, emissiveIntensity: 0.6 });
+      const bodyTopMat = new THREE.MeshStandardMaterial({ color: 0x5A5A7A, roughness: 0.55, emissive: 0x1A1A30, emissiveIntensity: 0.5 });
+      const bezelMat = new THREE.MeshStandardMaterial({ color: 0x303045, roughness: 0.65, emissive: 0x0D0D1A, emissiveIntensity: 0.5 });
       const screenMat = new THREE.MeshStandardMaterial({
-        color: 0x4A85E0, roughness: 0.05, emissive: 0x1A3A8A, emissiveIntensity: 1.0,
+        color: 0x4A85E0, roughness: 0.05, emissive: 0x1A3A8A, emissiveIntensity: 1.4,
       });
       const screenGlowMat = new THREE.MeshStandardMaterial({
-        color: 0x80B0FF, emissive: 0x4070CC, emissiveIntensity: 0.5,
-        transparent: true, opacity: 0.2,
+        color: 0x80B0FF, emissive: 0x4070CC, emissiveIntensity: 0.8,
+        transparent: true, opacity: 0.25,
       });
-      const keyMat = new THREE.MeshStandardMaterial({ color: 0x1C1C2C, roughness: 0.95 });
+      const keyMat = new THREE.MeshStandardMaterial({ color: 0x38384E, roughness: 0.95, emissive: 0x0A0A15, emissiveIntensity: 0.5 });
 
       // ── Base (keyboard section) ──
       const base = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.05, 0.55), bodyMat);
@@ -1015,10 +1016,16 @@
       screenGlow.position.set(0, 0.32, 0.039);
       lidGroup.add(screenGlow);
 
-      // Soft blue point light from screen
-      const screenLight = new THREE.PointLight(0x5590FF, 0.55, 2.8);
+      // Soft blue point light from screen (boosted)
+      const screenLight = new THREE.PointLight(0x5590FF, 1.2, 3.5);
       screenLight.position.set(0, 0.32, 0.15);
       lidGroup.add(screenLight);
+
+      // Fill light on keyboard side (local +z = world -z after Y-flip, facing character)
+      // keeps keyboard/body visible regardless of scene directional light angle
+      const fillLight = new THREE.PointLight(0xC8C8FF, 0.9, 2.5);
+      fillLight.position.set(0, 0.5, 0.5);
+      group.add(fillLight);
 
       group.add(lidGroup);
 
@@ -1028,8 +1035,9 @@
 
     const laptop = createLaptop();
     // Base center at world y=0.97, z=1.03 → keys at y≈1.01, matching arm tips (y≈0.99)
-    // Lid hinge at z≈0.755, screen faces forward-upward — no desk legs, no leg clipping
+    // Rotated 180° so keyboard+screen face the character (camera is at +z, character faces +z)
     laptop.position.set(0.4, 0.97, 1.03);
+    laptop.rotation.y = Math.PI;
     scene.add(laptop);
 
     // ── Quit animation state ──
@@ -1319,6 +1327,12 @@
     });
     document.getElementById('menu-test-notify').addEventListener('click', () => {
       showNotification('這是一段測試文字 🐰🥕');
+      contextMenu.style.display = 'none';
+    });
+    document.getElementById('menu-debug-laptop').addEventListener('click', () => {
+      currentAction = 'typing';
+      actionTimer = 0;
+      nextActionDelay = actionDurations.typing[1]; // hold for max typing duration
       contextMenu.style.display = 'none';
     });
     document.getElementById('menu-quit').addEventListener('click', () => {
@@ -1827,8 +1841,13 @@
           a.twinTailL.rotation.x = 0.15 + Math.sin(animTime * 1.2) * 0.03;
           a.twinTailR.rotation.x = 0.15 + Math.sin(animTime * 1.2 + 0.3) * 0.03;
 
-          // 面朝正前方
-          a.rotation.y = lp(a.rotation.y, 0, 2, delta);
+          // 側身 90°，兔兔面向 -x，讓筆電從側面可見
+          a.rotation.y = lp(a.rotation.y, -Math.PI / 2, 2, delta);
+
+          // 筆電移到兔兔左前方（-x 方向），鍵盤朝向 +x（朝兔兔）
+          laptop.position.x = lp(laptop.position.x, -1.0, 3, delta);
+          laptop.position.z = lp(laptop.position.z, 0, 3, delta);
+          laptop.rotation.y = Math.PI / 2;
 
           // 隱藏武器
           a.leftCarrot.visible = false;
@@ -1976,12 +1995,21 @@
           armRY = 0.45 - Math.sin(r) * 0.06;
           legLY = 0.02 + Math.sin(r) * 0.04;
           legRY = 0.02 - Math.sin(r) * 0.04;
+        } else if (currentAction === 'typing') {
+          // Pucci watches from the right side while bunny types on the left
+          bodyTilt = Math.sin(animTime * 1.5) * 0.03;
+          targetRotY = -0.6; // turn to look left toward bunny+laptop
+          eyeOffsetX = -0.015;
+          mouthScaleX = 0.9; mouthScaleY = 0.85;
         }
 
         // Apply (skip during quit sink phases — quit handles Pucci directly)
         const quitPhase2Start = QUIT_WAVE_DURATION;
         if (!isQuitting || quitTimer < quitPhase2Start) {
           p.position.y = posY;
+          // Drift back to home position when not doing a special move
+          p.position.x = lp(p.position.x, 1.1, 1.5, delta);
+          p.position.z = lp(p.position.z, 0.3, 1.5, delta);
           p.bodyMesh.rotation.z = bodyTilt;
           p.bodyMesh.rotation.x = bodyNod;
           p.leftEye.position.set(baseEyeLX + eyeOffsetX, baseEyeY + eyeOffsetY, 0.39);
