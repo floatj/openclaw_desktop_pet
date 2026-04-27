@@ -14,9 +14,10 @@
         "title": "Minecraft Pet",
         "width": 360,
         "height": 500,
-        "resizable": false,
+        "resizable": true,
         "decorations": false,
         "transparent": true,
+        "shadow": false,
         "alwaysOnTop": true,
         "x": 100,
         "y": 100

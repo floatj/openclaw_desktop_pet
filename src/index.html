@@ -64,12 +64,14 @@
     }
   </style>
 </head>
-<body data-tauri-drag-region>
+<body>
   <div id="notification-bubble"></div>
   <div id="context-menu" class="context-menu">
     <div class="menu-item" id="menu-toggle-roam">開始亂跑 🐇</div>
     <div class="menu-item" id="menu-toggle-weapon">切換武器 🗡️</div>
     <div class="menu-item" id="menu-emotion">切換表情 😐</div>
+    <div class="menu-item" id="menu-quiet">🔕 安靜模式</div>
+    <div class="menu-item" id="menu-scale">📏 調整大小 (中)</div>
     <div class="menu-item" id="menu-test-notify">發送測試通知泡泡</div>
     <div class="menu-item" id="menu-debug-laptop">💻 觸發打字動作</div>
     <div class="menu-item" id="menu-quit">離開</div>
@@ -93,6 +95,19 @@
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
     document.body.appendChild(renderer.domElement);
+
+    // Drag the window from the canvas only (left-click). The context menu sits above the canvas
+    // (z-index 10000), so its mousedowns never reach this handler — that's why the menu items
+    // become clickable on Win11. startDragging() must NOT be attached to document, because on
+    // Windows it enters a modal drag loop that swallows the click on whatever element was hit.
+    let isDragging = false;
+    renderer.domElement.addEventListener('mousedown', async (e) => {
+      if (e.button !== 0) return;
+      if (window.__TAURI__) {
+        isDragging = true;
+        try { await window.__TAURI__.window.getCurrentWindow().startDragging(); } catch {}
+      }
+    });
 
     // ── Lighting ──
     scene.add(new THREE.AmbientLight(0xfff5ee, 0.7));
@@ -121,6 +136,7 @@
     let currentEmotion = 'normal';
     let activeSkinCtx = null;
     let activeSkinCanvas = null;
+    let currentBlinkFrame = 0;
 
     // Draw emotion-specific face features onto the HEAD-FRONT area (x:9-14, y:11-15)
     function drawFaceFeatures(ctx, emotion) {
@@ -206,12 +222,31 @@
       }
     }
 
+    function drawBlinkFrame(ctx, frame) {
+      if (frame <= 0) return;
+
+      const SKIN = '#FFE0CC';
+      const LASH = '#1A3060';
+
+      ctx.fillStyle = SKIN;
+      ctx.fillRect(10, 12, 2, 2);
+      ctx.fillRect(13, 12, 2, 2);
+      ctx.fillStyle = LASH;
+      ctx.fillRect(10, 13, 2, 1);
+      ctx.fillRect(13, 13, 2, 1);
+    }
+
+    function redrawFaceTexture() {
+      if (!activeSkinCtx) return;
+      drawFaceFeatures(activeSkinCtx, currentEmotion);
+      drawBlinkFrame(activeSkinCtx, currentBlinkFrame);
+      if (avatarMaterial && avatarMaterial.map) avatarMaterial.map.needsUpdate = true;
+    }
+
     // Update the live skin canvas and flag the texture for re-upload
     function setEmotion(emotion) {
       currentEmotion = emotion;
-      if (!activeSkinCtx) return;
-      drawFaceFeatures(activeSkinCtx, emotion);
-      if (avatarMaterial && avatarMaterial.map) avatarMaterial.map.needsUpdate = true;
+      redrawFaceTexture();
     }
 
     // ── Skin Texture ──
@@ -658,19 +693,6 @@
     avatar.head.add(blushR);
     avatar.blushL = blushL;
     avatar.blushR = blushR;
-
-    // ── Rabbit eyelids (for blinking) ──
-    const eyelidMat = new THREE.MeshStandardMaterial({ color: 0xFFDDE8, roughness: 0.8, transparent: false });
-    const eyelidL = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.04), eyelidMat);
-    eyelidL.position.set(-0.125, -0.125, 0.52);
-    eyelidL.scale.set(1, 0, 1);
-    avatar.head.add(eyelidL);
-    const eyelidR = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.04), eyelidMat);
-    eyelidR.position.set(0.25, -0.125, 0.52);
-    eyelidR.scale.set(1, 0, 1);
-    avatar.head.add(eyelidR);
-    avatar.eyelidL = eyelidL;
-    avatar.eyelidR = eyelidR;
 
     // ── Right-hand carrot (for eat action) ──
     function createCarrot() {
@@ -1185,14 +1207,7 @@
     // Double-click triggers a random action
     document.addEventListener('dblclick', () => { if (!isQuitting && !isStarting) pickNextAction(); });
 
-    // Drag window on mousedown (canvas covers drag region, so use Tauri API directly)
-    let isDragging = false;
-    document.addEventListener('mousedown', (e) => {
-      if (e.button === 0 && window.__TAURI__) {
-        isDragging = true;
-        window.__TAURI__.window.getCurrentWindow().startDragging();
-      }
-    });
+    // Roam-position sync on mouseup. isDragging is set by the canvas mousedown listener above.
     document.addEventListener('mouseup', async () => {
       isDragging = false;
       // Sync roam position after user drag
@@ -1325,6 +1340,38 @@
       emotionMenuEl.textContent = `切換表情 ${emotionEmojis[e]} (${emotionLabels[e]})`;
       contextMenu.style.display = 'none';
     });
+    // Quiet mode: suppress random idle speech bubbles. Manual notifications still fire.
+    let quietMode = false;
+    const quietEl = document.getElementById('menu-quiet');
+    quietEl.addEventListener('click', () => {
+      quietMode = !quietMode;
+      quietEl.textContent = quietMode ? '🔔 取消安靜' : '🔕 安靜模式';
+      contextMenu.style.display = 'none';
+    });
+
+    // Cycle window size (small / medium / large). The 3D scene rescales via the existing resize handler.
+    const SCALE_PRESETS = [
+      { label: '小', w: 270, h: 375 },
+      { label: '中', w: 360, h: 500 },
+      { label: '大', w: 540, h: 750 },
+    ];
+    let scaleIdx = 1;
+    const scaleEl = document.getElementById('menu-scale');
+    scaleEl.addEventListener('click', async () => {
+      scaleIdx = (scaleIdx + 1) % SCALE_PRESETS.length;
+      const p = SCALE_PRESETS[scaleIdx];
+      scaleEl.textContent = `📏 調整大小 (${p.label})`;
+      if (window.__TAURI__) {
+        try {
+          const win = window.__TAURI__.window.getCurrentWindow();
+          const { LogicalSize } = window.__TAURI__.window;
+          await win.setSize(new LogicalSize(p.w, p.h));
+          roamWinW = p.w; roamWinH = p.h;
+        } catch (err) { console.warn('setSize failed', err); }
+      }
+      contextMenu.style.display = 'none';
+    });
+
     document.getElementById('menu-test-notify').addEventListener('click', () => {
       showNotification('這是一段測試文字 🐰🥕');
       contextMenu.style.display = 'none';
@@ -1446,7 +1493,7 @@
       }
 
       // ── Random chat bubbles (30-60 sec, skip during sleep/start/quit) ──
-      if (!isStarting && !isQuitting) {
+      if (!isStarting && !isQuitting && !quietMode) {
         randomBubbleTimer -= delta;
         if (randomBubbleTimer <= 0 && currentAction !== 'sleep' && currentAction !== 'headpat') {
           const line = randomLines[Math.floor(Math.random() * randomLines.length)];
@@ -1881,8 +1928,14 @@
           blinkClose = Math.sin((blinkCycle / 0.2) * Math.PI);
         }
         const shouldBlink = !isStarting && !isQuitting && currentAction !== 'sleep';
-        avatar.eyelidL.scale.set(1, shouldBlink ? blinkClose : 0, 1);
-        avatar.eyelidR.scale.set(1, shouldBlink ? blinkClose : 0, 1);
+        let nextBlinkFrame = 0;
+        if (shouldBlink && blinkClose > 0.58) {
+          nextBlinkFrame = 1;
+        }
+        if (nextBlinkFrame !== currentBlinkFrame) {
+          currentBlinkFrame = nextBlinkFrame;
+          redrawFaceTexture();
+        }
       }
 
       // ── Pucci expressive animation ──
