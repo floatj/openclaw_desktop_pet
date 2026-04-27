@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "dev:2d": "tauri dev --config src-tauri/tauri.2d.conf.json",
+    "serve:2d": "npx --yes http-server src -p 5173 -c-1 -o /index-2d.html"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"

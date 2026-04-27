@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "minecraft_pet_2d",
+  "build": {
+    "frontendDist": "../src",
+    "devUrl": null
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Pixel Pet (2D)",
+        "url": "index-2d.html",
+        "width": 320,
+        "height": 384
+      }
+    ]
+  }
+}
