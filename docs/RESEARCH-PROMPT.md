@@ -1,9 +1,9 @@
-# 研究任務：兔兔虛擬形象 — 手機版 + OpenClaw 連動
+# 研究任務：兔兔虛擬形象 — 手機版 + opc 連動
 
 ## 背景
 
 我有一個現成的 Minecraft 風格 3D 虛擬角色專案：
-- 位置：`/Users/floatj/project/openclaw/minecraft_pet/web/index.html`
+- 位置：`/Users/floatj/project/opc/minecraft_pet/web/index.html`
 - 技術：Three.js + Tauri（桌面版骨架）
 - 角色：兔耳女僕裝角色，有完整的 WASD 移動、跳躍、蹲下、跑步動畫
 - 世界：Minecraft 風格草地、樹、花、雲、櫻花飄落效果
@@ -18,10 +18,10 @@
 - 手機友善：觸控旋轉鏡頭、縮放
 - 能透過 Telegram 傳連結給朋友看
 
-### Layer 2：與 OpenClaw 即時連動
+### Layer 2：與 opc 即時連動
 - 兔兔（AI 助理）在 Telegram 回訊息時，3D 角色要有對應反應
 - 需要研究的連動方式：
-  - OpenClaw Gateway（跑在 MacBook Air M2 上）是否有 WebSocket 或 webhook 可用？
+  - opc Gateway（跑在 MacBook Air M2 上）是否有 WebSocket 或 webhook 可用？
   - 或者用 Telegram Bot API 的 webhook 監聽訊息事件？
   - 或者直接輪詢某個 endpoint？
 - 前端收到事件後播放對應動畫：
@@ -33,7 +33,7 @@
 
 ### Layer 3：手機鏡頭輸入（長遠目標）
 - 用手機瀏覽器的 `getUserMedia` API 拍照或錄影
-- 將圖片/影片傳送到 OpenClaw 讓兔兔分析
+- 將圖片/影片傳送到 opc 讓兔兔分析
 - 這層先做調研，不用實作
 
 ## 請幫我做以下研究
@@ -43,8 +43,8 @@
    - 哪個最適合純靜態 Three.js 頁面？
    - 手機效能考量（Three.js 在手機上跑得動嗎？需要哪些優化？）
 
-2. **OpenClaw Gateway 連動研究**
-   - 閱讀 OpenClaw 文件：`/Users/floatj/.nvm/versions/node/v22.16.0/lib/node_modules/openclaw/docs/`
+2. **opc Gateway 連動研究**
+   - 閱讀 opc 文件：`/Users/floatj/.nvm/versions/node/v22.16.0/lib/node_modules/opc/docs/`
    - 找出 Gateway 是否有 WebSocket / webhook / event stream 的 API
    - 找出當兔兔回訊息時，有沒有 hook 或 event 可以觸發外部通知
    - 查看 `hooks` 相關的設定文件
@@ -60,7 +60,7 @@
    - 安全性考量（HTTPS 才能用 getUserMedia）
 
 5. **現有程式碼評估**
-   - 閱讀 `/Users/floatj/project/openclaw/minecraft_pet/web/index.html`
+   - 閱讀 `/Users/floatj/project/opc/minecraft_pet/web/index.html`
    - 評估哪些部分可以直接用、哪些需要重構
    - Three.js 手機效能優化建議（降低 shadow map、減少 draw call 等）
 

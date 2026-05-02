@@ -1,18 +1,18 @@
 # 兔兔創意互動方案
 
 Date: 2026-04-26  
-Purpose: collect product/interaction ideas for making the OpenClaw rabbit feel like a living Telegram companion, not just a 3D avatar.
+Purpose: collect product/interaction ideas for making the opc rabbit feel like a living Telegram companion, not just a 3D avatar.
 
 ## 核心方向
 
-不要只做「OpenClaw 回訊息時，3D 兔兔嘴巴動」。
+不要只做「opc 回訊息時，3D 兔兔嘴巴動」。
 
 更有特色的方向是把兔兔做成一個 **Telegram 裡的共享小生命**：
 
 - 在 DM 裡是私人 AI 夥伴。
 - 在群組裡是大家共同照顧、共同觀察的小生物。
 - 在 Mini App 裡有自己的 3D 房間、心情、記憶和日常行為。
-- OpenClaw 訊息事件只是其中一種刺激，群組氣氛、時間、互動儀式、任務進度也會影響兔兔。
+- opc 訊息事件只是其中一種刺激，群組氣氛、時間、互動儀式、任務進度也會影響兔兔。
 
 ## 1. 群組共享狀態
 
@@ -29,7 +29,7 @@ Purpose: collect product/interaction ideas for making the OpenClaw rabbit feel l
 
 事件對狀態的影響：
 
-- OpenClaw 成功回覆：心情 +1，觸發 `speak`
+- opc 成功回覆：心情 +1，觸發 `speak`
 - 有人稱讚兔兔：好感度 +1，觸發 `happy`
 - 群組太吵：安全感下降，觸發 `nervous`
 - 深夜沒人說話：進入 `sleep`
@@ -79,7 +79,7 @@ DM 模式：
 - 爭論變多：雲變暗、兔兔縮起來、耳朵下垂
 - 群組安靜：兔兔坐下、看書、打瞌睡
 - 有人問很難的問題：兔兔歪頭、進入 `think`
-- OpenClaw 出錯：兔兔慌張、掉下小紅色驚嘆號
+- opc 出錯：兔兔慌張、掉下小紅色驚嘆號
 
 這樣比較安全，也比較有角色感。
 
@@ -133,7 +133,7 @@ DM 模式：
 
 ## 6. 反應優先於文字
 
-OpenClaw 不一定每次都要回長文字。
+opc 不一定每次都要回長文字。
 
 兔兔可以用動作表達狀態：
 
@@ -211,7 +211,7 @@ MVP 做法：
 
 例子：
 
-- OpenClaw 回覆時，所有人都看到兔兔說話。
+- opc 回覆時，所有人都看到兔兔說話。
 - 有人按 `/餵兔兔`，所有人都看到兔兔吃東西。
 - 群組氣氛改變，所有人的天空一起變化。
 
@@ -241,7 +241,7 @@ GET /events?room=telegram-group--100xxxx
 
 ## 10. 角色化的任務狀態
 
-把 OpenClaw 的工作狀態轉成兔兔行為。
+把 opc 的工作狀態轉成兔兔行為。
 
 狀態映射：
 
@@ -261,7 +261,7 @@ GET /events?room=telegram-group--100xxxx
 
 ```text
 Telegram Mini App 兔兔房間
-+ OpenClaw message hooks
++ opc message hooks
 + 群組共享心情狀態
 + 事件驅動 3D 動作
 + 每日兔兔觀察日記
@@ -272,7 +272,7 @@ MVP feature set:
 - Cloudflare Pages static 3D room
 - Telegram Mini App launcher
 - SSE relay
-- OpenClaw `message:received` / `message:sent` hook
+- opc `message:received` / `message:sent` hook
 - `mood` + `energy` shared state
 - 5 animations: `idle`, `think`, `speak`, `happy`, `sleep`
 - `/兔兔房間`
@@ -282,7 +282,7 @@ MVP feature set:
 Why this MVP is strong:
 
 - It is technically realistic.
-- It uses OpenClaw's existing hook system.
+- It uses opc's existing hook system.
 - It creates a differentiated product feeling.
 - It works in both DM and group.
 - It avoids privacy problems by making group output mostly emotional/visual instead of raw transcript mirroring.

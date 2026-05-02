@@ -2,7 +2,7 @@
 
 ## Goal
 
-Create a separate 8-bit/16-bit pure 2D MVP version of the current OpenClaw desktop pet while preserving the existing Minecraft-style Three.js version.
+Create a separate 8-bit/16-bit pure 2D MVP version of the current opc desktop pet while preserving the existing Minecraft-style Three.js version.
 
 The current 3D implementation must remain usable and unchanged unless a shared compatibility fix is required. The 2D version should be a duplicated skeleton with its own renderer, assets, and entry point, but it should reuse the product behavior model where practical.
 
@@ -12,7 +12,7 @@ The current 3D implementation must remain usable and unchanged unless a shared c
 - Do not remove Three.js or the Minecraft-style avatar.
 - Do not migrate the browser demo in `web/index.html`.
 - Do not build polished final sprite sheets before the MVP works.
-- Do not add OpenClaw hook/SSE integration in the first 2D MVP pass.
+- Do not add opc hook/SSE integration in the first 2D MVP pass.
 
 ## Current 3D Baseline
 
@@ -356,7 +356,7 @@ Design the 2D MVP so these are easy later:
 - Multiple skins.
 - Emotion overlays.
 - Accessory overlays.
-- OpenClaw event-driven actions.
+- opc event-driven actions.
 - Public viewer mode.
 - Telegram Mini App mode.
 - Per-action sound effects.
