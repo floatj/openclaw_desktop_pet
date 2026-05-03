@@ -46,7 +46,7 @@ export function render(ctx, state) {
     const rx = RABBIT_WORLD.x + state.offset.x;
     const ry = RABBIT_WORLD.y + state.offset.y;
     drawShadowBlob(ctx, RABBIT_WORLD.x, RABBIT_WORLD.y + 2, 28);
-    drawShadowBlob(ctx, RABBIT_WORLD.x + 31, RABBIT_WORLD.y + 2, 18);
+    drawShadowBlob(ctx, RABBIT_WORLD.x + 46, RABBIT_WORLD.y + 2, 18);
 
     if (state.facing === 'left') {
       ctx.save();

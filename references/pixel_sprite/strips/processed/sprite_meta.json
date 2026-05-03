@@ -1,0 +1,68 @@
+{
+  "frameSize": {
+    "w": 128,
+    "h": 128
+  },
+  "animations": {
+    "idle": {
+      "row": 0,
+      "frames": 4,
+      "msPerFrame": 250,
+      "loop": true
+    },
+    "idle_look": {
+      "row": 1,
+      "frames": 4,
+      "msPerFrame": 500,
+      "loop": true
+    },
+    "happy": {
+      "row": 2,
+      "frames": 6,
+      "msPerFrame": 150,
+      "loop": true
+    },
+    "speak": {
+      "row": 3,
+      "frames": 4,
+      "msPerFrame": 300,
+      "loop": true
+    },
+    "think": {
+      "row": 4,
+      "frames": 4,
+      "msPerFrame": 500,
+      "loop": true
+    },
+    "sleep": {
+      "row": 5,
+      "frames": 4,
+      "msPerFrame": 800,
+      "loop": true
+    },
+    "angry": {
+      "row": 6,
+      "frames": 4,
+      "msPerFrame": 250,
+      "loop": true
+    },
+    "shy": {
+      "row": 7,
+      "frames": 4,
+      "msPerFrame": 400,
+      "loop": true
+    },
+    "walk_right": {
+      "row": 8,
+      "frames": 6,
+      "msPerFrame": 120,
+      "loop": true
+    },
+    "walk_left": {
+      "row": 9,
+      "frames": 6,
+      "msPerFrame": 120,
+      "loop": true
+    }
+  }
+}

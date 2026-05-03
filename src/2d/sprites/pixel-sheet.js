@@ -1,4 +1,4 @@
-const FRAME_SIZE = 64;
+const FRAME_SIZE = 128;
 
 const sheet = new Image();
 let sheetReady = false;
@@ -6,7 +6,7 @@ let sheetReady = false;
 sheet.addEventListener('load', () => {
   sheetReady = true;
 });
-sheet.src = `${new URL('../assets/npc-rabbit-generated-atlas.png', import.meta.url).href}?v=runtime-aligned-2`;
+sheet.src = `${new URL('../assets/npc-rabbit-strip-atlas.png', import.meta.url).href}?v=strip-pipeline-2`;
 
 const FRAME_MAP = {
   idle_a: [0, 0],
@@ -17,11 +17,14 @@ const FRAME_MAP = {
   wave_b: [2, 1],
   wave_c: [2, 2],
   wave_d: [2, 3],
-  run_a: [8, 1],
-  run_b: [8, 2],
-  run_c: [8, 3],
-  run_d: [8, 4],
-  run_e: [8, 5],
+  wave_e: [2, 4],
+  wave_f: [2, 5],
+  run_a: [8, 0],
+  run_b: [8, 1],
+  run_c: [8, 2],
+  run_d: [8, 3],
+  run_e: [8, 4],
+  run_f: [8, 5],
   sleep_a: [5, 0],
   sleep_b: [5, 1],
   sleep_c: [5, 2],
