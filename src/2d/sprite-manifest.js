@@ -26,20 +26,20 @@ export const PALETTE = {
 
 export const RABBIT_SPRITE = {
   id: 'rabbit-maid',
-  frameSize: { w: 64, h: 80 },
-  anchor: { x: 32, y: 74 },
+  frameSize: { w: 64, h: 64 },
+  anchor: { x: 32, y: 60 },
   hitboxes: {
-    head: { x: 14, y: 4, w: 36, h: 32 },
-    body: { x: 18, y: 34, w: 28, h: 36 },
+    head: { x: 17, y: 4, w: 30, h: 30 },
+    body: { x: 18, y: 31, w: 28, h: 28 },
   },
   animations: {
-    idle:    { frames: ['idle_a', 'idle_b', 'idle_a', 'idle_c'], fps: 4,  loop: true },
-    wave:    { frames: ['wave_a', 'wave_b', 'wave_c', 'wave_b'], fps: 8,  loop: true },
-    run:     { frames: ['run_a', 'run_b', 'run_c', 'run_b'],     fps: 10, loop: true },
-    sleep:   { frames: ['sleep_a', 'sleep_b'],                   fps: 2,  loop: true },
-    eat:     { frames: ['eat_a', 'eat_b', 'eat_c', 'eat_b'],     fps: 6,  loop: true },
-    typing:  { frames: ['type_a', 'type_b'],                     fps: 8,  loop: true },
-    headpat: { frames: ['pat_a', 'pat_b', 'pat_c', 'pat_b'],     fps: 12, loop: true },
+    idle:    { frames: ['idle_a', 'idle_b', 'idle_c', 'idle_d'],                         fps: 4,  loop: true },
+    wave:    { frames: ['wave_a', 'wave_b', 'wave_c', 'wave_d'],                         fps: 8,  loop: true },
+    run:     { frames: ['run_a', 'run_b', 'run_c', 'run_d', 'run_e'],                    fps: 10, loop: true },
+    sleep:   { frames: ['sleep_a', 'sleep_b', 'sleep_c', 'sleep_d'],                     fps: 2,  loop: true },
+    eat:     { frames: ['eat_a', 'eat_b', 'eat_c', 'eat_d'],                             fps: 6,  loop: true },
+    typing:  { frames: ['type_a', 'type_b', 'type_c', 'type_d'],                         fps: 8,  loop: true },
+    headpat: { frames: ['pat_a', 'pat_b', 'pat_c', 'pat_d'],                             fps: 12, loop: true },
   },
 };
 
