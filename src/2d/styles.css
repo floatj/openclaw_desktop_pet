@@ -31,8 +31,9 @@ body {
 
 #hud {
   position: fixed;
-  top: 4px;
-  left: 4px;
+  top: 96px;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 11px;
   color: #fff;
   background: rgba(0, 0, 0, 0.45);
@@ -40,6 +41,7 @@ body {
   border-radius: 4px;
   pointer-events: none;
   font-family: monospace;
+  white-space: nowrap;
 }
 
 body.dark #hud {

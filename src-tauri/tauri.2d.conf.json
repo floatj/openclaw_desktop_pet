@@ -6,12 +6,17 @@
     "devUrl": null
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "Pixel Pet (2D)",
         "url": "index-2d.html",
         "width": 320,
-        "height": 384
+        "height": 384,
+        "transparent": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "shadow": false
       }
     ]
   }
