@@ -282,6 +282,63 @@ function drawBody(ctx, opts = {}) {
   rect(ctx, 33, 71, 2, 1, P.hairLight);
 }
 
+function drawSittingBody(ctx, opts = {}) {
+  const bob = opts.bob || 0;
+  ctx.save();
+  ctx.translate(0, bob);
+
+  // Compact torso tucked into a seated skirt.
+  rect(ctx, 23, 43, 18, 8, P.dress);
+  rect(ctx, 22, 44, 1, 7, P.outline);
+  rect(ctx, 41, 44, 1, 7, P.outline);
+  rect(ctx, 23, 43, 18, 1, P.outline);
+  rect(ctx, 23, 50, 18, 1, P.outline);
+
+  rect(ctx, 18, 51, 28, 13, P.dress);
+  rect(ctx, 16, 56, 32, 10, P.dress);
+  rect(ctx, 15, 57, 1, 8, P.outline);
+  rect(ctx, 48, 57, 1, 8, P.outline);
+  rect(ctx, 17, 51, 29, 1, P.outline);
+  rect(ctx, 16, 66, 32, 1, P.outline);
+  rect(ctx, 40, 53, 5, 12, P.dressShadow);
+
+  // Apron drapes over the lap.
+  rect(ctx, 25, 44, 14, 19, P.apron);
+  rect(ctx, 24, 45, 1, 17, P.outline);
+  rect(ctx, 39, 45, 1, 17, P.outline);
+  rect(ctx, 25, 44, 14, 1, P.outline);
+  rect(ctx, 25, 62, 14, 1, P.outline);
+  rect(ctx, 37, 48, 2, 13, P.apronShadow);
+  rect(ctx, 27, 63, 3, 1, P.apron);
+  rect(ctx, 33, 63, 3, 1, P.apron);
+
+  // Bent legs and shoes peeking out to the sides.
+  rect(ctx, 17, 65, 11, 4, P.apron);
+  rect(ctx, 36, 65, 11, 4, P.apron);
+  rect(ctx, 16, 65, 1, 4, P.outline);
+  rect(ctx, 28, 65, 1, 4, P.outline);
+  rect(ctx, 35, 65, 1, 4, P.outline);
+  rect(ctx, 47, 65, 1, 4, P.outline);
+  rect(ctx, 17, 69, 11, 1, P.outline);
+  rect(ctx, 36, 69, 11, 1, P.outline);
+  rect(ctx, 13, 68, 12, 5, P.dress);
+  rect(ctx, 39, 68, 12, 5, P.dress);
+  rect(ctx, 13, 68, 12, 1, P.outline);
+  rect(ctx, 39, 68, 12, 1, P.outline);
+  rect(ctx, 12, 69, 1, 3, P.outline);
+  rect(ctx, 51, 69, 1, 3, P.outline);
+  rect(ctx, 13, 72, 12, 1, P.outline);
+  rect(ctx, 39, 72, 12, 1, P.outline);
+
+  // Bow sits just under the chin.
+  rect(ctx, 27, 39, 10, 4, P.bow);
+  rect(ctx, 30, 40, 4, 2, P.dressShadow);
+  rect(ctx, 27, 39, 10, 1, P.outline);
+  rect(ctx, 27, 42, 10, 1, P.outline);
+
+  ctx.restore();
+}
+
 // =========================================================================
 // ARMS — puff sleeve at top, white glove at hand. Resting at sides by default.
 // =========================================================================
@@ -378,16 +435,23 @@ function drawCarrot(ctx, x, y) {
   rect(ctx, x + 3, y - 3, 2, 3, P.carrotLeaf);
 }
 
-function drawLaptop(ctx, x, y) {
-  rect(ctx, x, y, 18, 8, P.laptop);
-  rect(ctx, x + 1, y + 1, 16, 5, P.laptopScreen);
-  rect(ctx, x, y, 18, 1, P.outline);
-  rect(ctx, x, y + 7, 18, 1, P.outline);
-  rect(ctx, x, y, 1, 8, P.outline);
-  rect(ctx, x + 17, y, 1, 8, P.outline);
-  rect(ctx, x - 1, y + 8, 20, 2, P.laptopShadow);
-  rect(ctx, x - 1, y + 8, 20, 1, P.outline);
-  rect(ctx, x - 1, y + 10, 20, 1, P.outline);
+function drawCodingLaptop(ctx, x, y, opts = {}) {
+  rect(ctx, x, y, 28, 14, P.outline);
+  rect(ctx, x + 1, y + 1, 26, 12, P.laptop);
+  rect(ctx, x + 3, y + 3, 22, 8, P.outline);
+  rect(ctx, x + 4, y + 4, 20, 6, P.laptopScreen);
+  rect(ctx, x + 5, y + 5, 7, 1, P.carrotLeaf);
+  rect(ctx, x + 13, y + 5, 8, 1, P.hairLight);
+  rect(ctx, x + 5, y + 8, 5, 1, P.blush);
+  rect(ctx, x + 11, y + 8, 10, 1, P.carrotLeaf);
+  if (opts.cursor) rect(ctx, x + 22, y + 7, 1, 4, P.apron);
+
+  rect(ctx, x - 4, y + 14, 36, 6, P.laptopShadow);
+  rect(ctx, x - 5, y + 14, 38, 1, P.outline);
+  rect(ctx, x - 4, y + 19, 36, 1, P.outline);
+  for (let kx = x - 1 + (opts.keyOffset || 0); kx < x + 27; kx += 4) {
+    rect(ctx, kx, y + 16, 2, 1, P.apronShadow);
+  }
 }
 
 // =========================================================================
@@ -475,6 +539,24 @@ const POSES = {
     ctx.font = 'bold 7px monospace';
     ctx.fillText('Z', 4, 14);
   },
+  sit_a(ctx) {
+    drawEars(ctx, { wiggleL: 1 });
+    drawSittingBody(ctx);
+    drawArms(ctx, { leftY: 4, rightY: 4 });
+    drawHead(ctx, { yOffset: 2 });
+  },
+  sit_b(ctx) {
+    drawEars(ctx);
+    drawSittingBody(ctx, { bob: 1 });
+    drawArms(ctx, { leftY: 5, rightY: 5 });
+    drawHead(ctx, { happy: true, yOffset: 3 });
+  },
+  sit_c(ctx) {
+    drawEars(ctx, { wiggleR: 1 });
+    drawSittingBody(ctx);
+    drawArms(ctx, { leftY: 4, rightY: 4 });
+    drawHead(ctx, { eyesClosed: true, yOffset: 2 });
+  },
   eat_a(ctx) {
     drawEars(ctx);
     drawBody(ctx);
@@ -497,19 +579,33 @@ const POSES = {
     drawCarrot(ctx, 36, 28);
     rect(ctx, 36, 30, 2, 2, P.carrotShadow);
   },
-  type_a(ctx) {
-    drawEars(ctx);
-    drawBody(ctx);
-    drawArms(ctx, { leftY: -1, rightY: 1 });
-    drawHead(ctx);
-    drawLaptop(ctx, 23, 56);
+  code_a(ctx) {
+    drawEars(ctx, { wiggleL: 1 });
+    drawSittingBody(ctx);
+    drawArms(ctx, { leftY: 5, rightY: 4 });
+    drawHead(ctx, { yOffset: 2 });
+    drawCodingLaptop(ctx, 18, 55, { cursor: true });
   },
-  type_b(ctx) {
+  code_b(ctx) {
+    drawEars(ctx);
+    drawSittingBody(ctx, { bob: 1 });
+    drawArms(ctx, { leftY: 4, rightY: 5 });
+    drawHead(ctx, { yOffset: 2 });
+    drawCodingLaptop(ctx, 18, 55, { keyOffset: 1 });
+  },
+  code_c(ctx) {
     drawEars(ctx, { wiggleR: 1 });
-    drawBody(ctx);
-    drawArms(ctx, { leftY: 1, rightY: -1 });
-    drawHead(ctx);
-    drawLaptop(ctx, 23, 56);
+    drawSittingBody(ctx);
+    drawArms(ctx, { leftY: 5, rightY: 5 });
+    drawHead(ctx, { eyesClosed: true, yOffset: 2 });
+    drawCodingLaptop(ctx, 18, 55, { cursor: true, keyOffset: 2 });
+  },
+  code_d(ctx) {
+    drawEars(ctx);
+    drawSittingBody(ctx, { bob: 1 });
+    drawArms(ctx, { leftY: 4, rightY: 4 });
+    drawHead(ctx, { yOffset: 2 });
+    drawCodingLaptop(ctx, 18, 55);
   },
   pat_a(ctx) {
     drawEars(ctx, { wiggleL: 2, wiggleR: 2 });

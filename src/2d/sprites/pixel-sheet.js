@@ -1,4 +1,5 @@
-const FRAME_SIZE = 128;
+const DRAW_FRAME_SIZE = 128;
+const SOURCE_FRAME_SIZE = 256;
 
 const sheet = new Image();
 let sheetReady = false;
@@ -6,7 +7,7 @@ let sheetReady = false;
 sheet.addEventListener('load', () => {
   sheetReady = true;
 });
-sheet.src = `${new URL('../assets/npc-rabbit-strip-atlas.png', import.meta.url).href}?v=strip-pipeline-2`;
+sheet.src = `${new URL('../assets/npc-rabbit-strip-atlas.png', import.meta.url).href}?v=highres-strip-pipeline-1`;
 
 const FRAME_MAP = {
   idle_a: [0, 0],
@@ -29,14 +30,18 @@ const FRAME_MAP = {
   sleep_b: [5, 1],
   sleep_c: [5, 2],
   sleep_d: [5, 3],
+  sit_a: [10, 0],
+  sit_b: [10, 1],
+  sit_c: [10, 2],
+  sit_d: [10, 3],
+  code_a: [11, 0],
+  code_b: [11, 1],
+  code_c: [11, 2],
+  code_d: [11, 3],
   eat_a: [2, 0],
   eat_b: [2, 1],
   eat_c: [2, 2],
   eat_d: [2, 3],
-  type_a: [3, 0],
-  type_b: [3, 1],
-  type_c: [3, 2],
-  type_d: [3, 3],
   pat_a: [7, 0],
   pat_b: [7, 1],
   pat_c: [7, 2],
@@ -48,19 +53,22 @@ export function isPixelSheetReady() {
 }
 
 export function drawPixelPose(ctx, poseKey) {
+  const frame = FRAME_MAP[poseKey];
+  if (!frame) return false;
+
   if (!sheetReady) return false;
 
-  const [row, col] = FRAME_MAP[poseKey] || FRAME_MAP.idle_a;
+  const [row, col] = frame;
   ctx.drawImage(
     sheet,
-    col * FRAME_SIZE,
-    row * FRAME_SIZE,
-    FRAME_SIZE,
-    FRAME_SIZE,
+    col * SOURCE_FRAME_SIZE,
+    row * SOURCE_FRAME_SIZE,
+    SOURCE_FRAME_SIZE,
+    SOURCE_FRAME_SIZE,
     0,
     0,
-    FRAME_SIZE,
-    FRAME_SIZE,
+    DRAW_FRAME_SIZE,
+    DRAW_FRAME_SIZE,
   );
   return true;
 }

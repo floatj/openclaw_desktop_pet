@@ -36,9 +36,10 @@ export const RABBIT_SPRITE = {
     idle:    { frames: ['idle_a', 'idle_b', 'idle_c', 'idle_d'],                         fps: 4,  loop: true },
     wave:    { frames: ['wave_a', 'wave_b', 'wave_c', 'wave_d', 'wave_e', 'wave_f'],     fps: 8,  loop: true },
     run:     { frames: ['run_a', 'run_b', 'run_c', 'run_d', 'run_e', 'run_f'],           fps: 10, loop: true },
-    sleep:   { frames: ['sleep_a', 'sleep_b', 'sleep_c', 'sleep_d'],                     fps: 2,  loop: true },
+    sit_down:{ frames: ['sit_a', 'sit_b', 'sit_c', 'sit_b'],                             fps: 3,  loop: true },
+    sleep:   { frames: ['sleep_a', 'sleep_b', 'sleep_c', 'sleep_d'],                     fps: 1,  loop: true },
     eat:     { frames: ['eat_a', 'eat_b', 'eat_c', 'eat_d'],                             fps: 6,  loop: true },
-    typing:  { frames: ['type_a', 'type_b', 'type_c', 'type_d'],                         fps: 8,  loop: true },
+    coding:  { frames: ['code_a', 'code_b', 'code_c', 'code_d'],                         fps: 8,  loop: true },
     headpat: { frames: ['pat_a', 'pat_b', 'pat_c', 'pat_d'],                             fps: 12, loop: true },
   },
 };

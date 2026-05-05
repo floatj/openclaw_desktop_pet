@@ -10,11 +10,11 @@ RAW_DIR = ROOT / "references/pixel_sprite/strips/raw"
 PROCESSED_DIR = ROOT / "references/pixel_sprite/strips/processed"
 APP_ASSET = ROOT / "src/2d/assets/npc-rabbit-strip-atlas.png"
 
-FRAME = 128
+FRAME = 256
 ATLAS_COLS = 6
-MAX_FRAME_W = 116
-MAX_FRAME_H = 112
-BASELINE_Y = 120
+MAX_FRAME_W = 232
+MAX_FRAME_H = 224
+BASELINE_Y = 240
 
 ROWS = [
     ("idle", 4, 250),
@@ -27,7 +27,13 @@ ROWS = [
     ("shy", 4, 400),
     ("walk_right", 6, 120),
     ("walk_left", 6, 120),
+    ("sit_down", 4, 333),
+    ("coding", 4, 180),
 ]
+
+PRESIZED_STRIPS = {
+    "coding": PROCESSED_DIR / "coding-highres-strip.png",
+}
 
 
 def is_key_green(pixel):
@@ -111,7 +117,7 @@ def render_row(frames):
 
     max_w = max(frame.width for frame in valid)
     max_h = max(frame.height for frame in valid)
-    scale = min(MAX_FRAME_W / max_w, MAX_FRAME_H / max_h, 1.0)
+    scale = min(MAX_FRAME_W / max_w, MAX_FRAME_H / max_h)
 
     for index, frame in enumerate(frames):
         if frame is None:
@@ -123,6 +129,15 @@ def render_row(frames):
         y = BASELINE_Y - height
         y = max(2, min(FRAME - height - 2, y))
         row.alpha_composite(scaled, (x, y))
+    return row
+
+
+def render_presized_strip(strip, frame_count):
+    row = Image.new("RGBA", (ATLAS_COLS * FRAME, FRAME), (255, 255, 255, 0))
+    strip = strip.convert("RGBA")
+    for index in range(frame_count):
+        frame = strip.crop((index * FRAME, 0, (index + 1) * FRAME, FRAME))
+        row.alpha_composite(frame, (index * FRAME, 0))
     return row
 
 
@@ -171,13 +186,16 @@ def main():
     meta = {"frameSize": {"w": FRAME, "h": FRAME}, "animations": {}}
 
     for row_index, (name, frame_count, ms_per_frame) in enumerate(ROWS):
-        source = RAW_DIR / f"{name}.png"
-        if not source.exists():
-            raise FileNotFoundError(source)
+        if name in PRESIZED_STRIPS and PRESIZED_STRIPS[name].exists():
+            rendered = render_presized_strip(Image.open(PRESIZED_STRIPS[name]), frame_count)
+        else:
+            source = RAW_DIR / f"{name}.png"
+            if not source.exists():
+                raise FileNotFoundError(source)
 
-        strip = strip_chroma(Image.open(source))
-        frames = extract_frames(strip, frame_count)
-        rendered = render_row(frames)
+            strip = strip_chroma(Image.open(source))
+            frames = extract_frames(strip, frame_count)
+            rendered = render_row(frames)
         rendered.save(PROCESSED_DIR / f"{name}.png")
         atlas.alpha_composite(rendered, (0, row_index * FRAME))
         meta["animations"][name] = {
@@ -188,7 +206,13 @@ def main():
         }
 
     atlas = clean_final_atlas(atlas)
-    atlas_path = PROCESSED_DIR / "npc_rabbit_strip_atlas_768x1280.png"
+    for row_index, (name, frame_count, _) in enumerate(ROWS):
+        if name in PRESIZED_STRIPS and PRESIZED_STRIPS[name].exists():
+            rendered = render_presized_strip(Image.open(PRESIZED_STRIPS[name]), frame_count)
+            atlas.paste((255, 255, 255, 0), (0, row_index * FRAME, ATLAS_COLS * FRAME, (row_index + 1) * FRAME))
+            atlas.alpha_composite(rendered, (0, row_index * FRAME))
+
+    atlas_path = PROCESSED_DIR / "npc_rabbit_strip_atlas_1536x3072.png"
     meta_path = PROCESSED_DIR / "sprite_meta.json"
     atlas.save(atlas_path)
     atlas.save(APP_ASSET)

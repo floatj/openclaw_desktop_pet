@@ -1,12 +1,12 @@
 import { RABBIT_SPRITE, PUCCI_SPRITE } from './sprite-manifest.js';
 
-const CORE_ACTIONS = ['idle', 'wave', 'run', 'sleep', 'eat', 'typing', 'headpat'];
+const CORE_ACTIONS = ['idle', 'wave', 'run', 'sit_down', 'sleep', 'eat', 'coding', 'headpat'];
 
 const TIME_WEIGHTS = {
-  morning: { idle: 3, wave: 3, run: 2, eat: 2, typing: 1, headpat: 1, sleep: 0 },
-  day:     { idle: 3, wave: 2, run: 3, eat: 1, typing: 3, headpat: 1, sleep: 0 },
-  evening: { idle: 4, wave: 2, run: 1, eat: 2, typing: 2, headpat: 2, sleep: 1 },
-  night:   { idle: 2, wave: 1, run: 1, eat: 1, typing: 1, headpat: 1, sleep: 6 },
+  morning: { idle: 3, wave: 3, run: 2, sit_down: 1, eat: 2, coding: 1, headpat: 1, sleep: 0 },
+  day:     { idle: 3, wave: 2, run: 3, sit_down: 1, eat: 1, coding: 3, headpat: 1, sleep: 0 },
+  evening: { idle: 4, wave: 2, run: 1, sit_down: 3, eat: 2, coding: 2, headpat: 2, sleep: 1 },
+  night:   { idle: 2, wave: 1, run: 1, sit_down: 3, eat: 1, coding: 1, headpat: 1, sleep: 6 },
 };
 
 function timeBucket(date = new Date()) {
@@ -45,6 +45,9 @@ export function createState() {
     pucciAction: 'idle',
     pucciAnimFrameIndex: 0,
     pucciAnimElapsed: 0,
+
+    // Action selection mode. "manual" sticks until the menu switches back to random.
+    rabbitActionMode: 'random',
 
     // Mode flags
     quietMode: false,
@@ -88,16 +91,17 @@ export function setAction(state, action, opts = {}) {
   state.props.carrot = false;
   state.props.laptop = false;
   if (action === 'eat') state.props.carrot = true;
-  if (action === 'typing') state.props.laptop = true;
+  if (action === 'coding') state.props.laptop = true;
 
   // Action durations (seconds)
   const durations = {
     idle: 4 + Math.random() * 4,
     wave: 2.5,
     run: 3 + Math.random() * 3,
+    sit_down: 7 + Math.random() * 4,
     sleep: 6,
     eat: 4,
-    typing: 5 + Math.random() * 4,
+    coding: 5 + Math.random() * 4,
     headpat: 2.5,
   };
   state.actionDuration = durations[action] ?? 3;
@@ -125,7 +129,7 @@ export function updateState(state, dt) {
   state.actionTimer += dt;
 
   // Action scheduler
-  if (state.actionTimer >= state.actionDuration) {
+  if (state.rabbitActionMode === 'random' && state.actionTimer >= state.actionDuration) {
     const next = pickNextAction(state);
     setAction(state, next);
   }
@@ -138,6 +142,9 @@ export function updateState(state, dt) {
   } else if (state.currentAction === 'run') {
     state.offset.y = Math.abs(Math.sin(state.poseTime * 10)) * -2;
     state.velocity.x = state.facing === 'right' ? 30 : -30;
+  } else if (state.currentAction === 'sit_down') {
+    state.offset.y = 1;
+    state.velocity.x = 0;
   } else {
     state.velocity.x = 0;
   }

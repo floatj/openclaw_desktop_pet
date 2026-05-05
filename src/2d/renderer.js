@@ -6,12 +6,15 @@ import { getCurrentRabbitPose, getCurrentPucciPose } from './state.js';
 
 export const CANVAS_W = 160;
 export const CANVAS_H = 192;
+export const DEVICE_SCALE = 2;
 
 const RABBIT_WORLD = { x: 80, y: 170 }; // anchor (feet center) world position
 const PUCCI_WORLD  = { x: 128, y: 178 };
 
 export function setupCanvas(canvas) {
   const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.setTransform(DEVICE_SCALE, 0, 0, DEVICE_SCALE, 0, 0);
   ctx.imageSmoothingEnabled = false;
   return ctx;
 }
@@ -103,5 +106,25 @@ export function pointInRabbitHead(internalX, internalY) {
   const hb = RABBIT_SPRITE.hitboxes.head;
   const sx = RABBIT_WORLD.x - RABBIT_SPRITE.anchor.x + hb.x;
   const sy = RABBIT_WORLD.y - RABBIT_SPRITE.anchor.y + hb.y;
+  return internalX >= sx && internalX <= sx + hb.w && internalY >= sy && internalY <= sy + hb.h;
+}
+
+export function pointInRabbit(internalX, internalY) {
+  const hb = RABBIT_SPRITE.hitboxes.body;
+  const sx = RABBIT_WORLD.x - RABBIT_SPRITE.anchor.x + hb.x;
+  const sy = RABBIT_WORLD.y - RABBIT_SPRITE.anchor.y + hb.y;
+  return internalX >= sx && internalX <= sx + hb.w && internalY >= sy && internalY <= sy + hb.h;
+}
+
+export function pointInPucci(internalX, internalY) {
+  if (isPixelSheetReady()) {
+    const sx = RABBIT_WORLD.x - RABBIT_SPRITE.anchor.x + 92;
+    const sy = RABBIT_WORLD.y - RABBIT_SPRITE.anchor.y + 82;
+    return internalX >= sx && internalX <= sx + 34 && internalY >= sy && internalY <= sy + 40;
+  }
+
+  const hb = PUCCI_SPRITE.hitboxes.body;
+  const sx = PUCCI_WORLD.x - PUCCI_SPRITE.anchor.x + hb.x;
+  const sy = PUCCI_WORLD.y - PUCCI_SPRITE.anchor.y + hb.y;
   return internalX >= sx && internalX <= sx + hb.w && internalY >= sy && internalY <= sy + hb.h;
 }

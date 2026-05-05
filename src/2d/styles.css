@@ -48,3 +48,71 @@ body.dark #hud {
   background: rgba(255, 255, 255, 0.2);
   color: #ffd;
 }
+
+#pet-menu {
+  position: fixed;
+  z-index: 20;
+  display: none;
+  min-width: 132px;
+  padding: 4px;
+  background: rgba(248, 250, 252, 0.96);
+  border: 1px solid rgba(34, 48, 71, 0.22);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(8px);
+}
+
+#pet-menu.open {
+  display: grid;
+  gap: 2px;
+}
+
+#pet-menu button {
+  width: 100%;
+  height: 26px;
+  padding: 0 8px 0 22px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #172033;
+  font: 12px/1 'Segoe UI', 'Noto Sans TC', sans-serif;
+  text-align: left;
+  cursor: default;
+  position: relative;
+  white-space: nowrap;
+}
+
+#pet-menu button:hover,
+#pet-menu button:focus-visible {
+  background: rgba(35, 73, 135, 0.12);
+  outline: none;
+}
+
+#pet-menu button[aria-checked="true"]::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 10px;
+  width: 6px;
+  height: 6px;
+  background: #234987;
+  border-radius: 50%;
+}
+
+body.dark #pet-menu {
+  background: rgba(23, 32, 51, 0.96);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+body.dark #pet-menu button {
+  color: #f8fafc;
+}
+
+body.dark #pet-menu button:hover,
+body.dark #pet-menu button:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+body.dark #pet-menu button[aria-checked="true"]::before {
+  background: #b8d8ee;
+}

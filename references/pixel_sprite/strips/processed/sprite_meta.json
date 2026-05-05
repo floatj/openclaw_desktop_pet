@@ -1,7 +1,7 @@
 {
   "frameSize": {
-    "w": 128,
-    "h": 128
+    "w": 256,
+    "h": 256
   },
   "animations": {
     "idle": {
@@ -62,6 +62,18 @@
       "row": 9,
       "frames": 6,
       "msPerFrame": 120,
+      "loop": true
+    },
+    "sit_down": {
+      "row": 10,
+      "frames": 4,
+      "msPerFrame": 333,
+      "loop": true
+    },
+    "coding": {
+      "row": 11,
+      "frames": 4,
+      "msPerFrame": 180,
       "loop": true
     }
   }
